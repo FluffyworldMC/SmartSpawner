@@ -248,8 +248,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.timeFormatter = new TimeFormatter(this);
         this.configUpdater = new ConfigUpdater(this);
         configUpdater.checkAndUpdateConfig();
-        this.languageManager = new LanguageManager(this);
+
+        // Top up the language files BEFORE LanguageManager reads them. LanguageManager caches the
+        // file contents, so a key added afterwards would not be visible until the next reload.
         this.languageUpdater = new LanguageUpdater(this);
+        this.languageManager = new LanguageManager(this);
         this.messageService = new MessageService(this, languageManager);
         
         // Initialize new unified spawner settings config (but don't load yet)
