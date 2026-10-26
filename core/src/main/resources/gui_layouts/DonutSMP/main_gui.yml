@@ -2,6 +2,10 @@
 # Slot positions: 1-27 (3 rows of 9 slots each)
 # Valid materials: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
 #
+# Optional title: supports & colours, {entity}, {ᴇɴᴛɪᴛʏ}, {amount} and %placeholderapi%.
+# title: "&8{entity} Spawner"
+# Buttons also accept item:, name:, lore:, item_model:, custom_model_data:, amount: and hide_tooltip:.
+#
 # Format:
 #   slot_X:                    # X = slot number (1-27)
 #     material: MATERIAL_NAME  # Material to display (use PLAYER_HEAD for spawner mob head)

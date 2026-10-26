@@ -96,7 +96,8 @@ public class SpawnerSellManager {
 
         // Lightweight snapshot – safe because isSelling prevents concurrent inventory changes
         final Map<ItemSignature, Long> itemSnapshot = virtualInv.getConsolidatedItems();
-        final double accumulatedValue = spawner.getAccumulatedSellValue();
+        final double accumulatedValue = resolveSellValue(player, itemSnapshot,
+                spawner.getAccumulatedSellValue());
         final Location spawnerLocation = spawner.getSpawnerLocation();
 
         SellResult result;
@@ -214,6 +215,31 @@ public class SpawnerSellManager {
         }
 
         return new SellResult(totalValue, totalItemsSold, consolidatedItems);
+    }
+
+    /**
+     * Resolves the amount to pay. Most price sources are player-independent, so the cached
+     * accumulated value is used verbatim. A player-priced shop (UltimateShop) is re-priced against
+     * the actual seller so conditions and multipliers apply correctly.
+     */
+    private double resolveSellValue(Player player, Map<ItemSignature, Long> items, double fallback) {
+        github.nighter.smartspawner.hooks.economy.ItemPriceManager priceManager =
+                plugin.getItemPriceManager();
+        if (priceManager == null || !priceManager.usesPlayerPricing()) {
+            return fallback;
+        }
+
+        double total = 0.0;
+        for (Map.Entry<ItemSignature, Long> entry : items.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                continue;
+            }
+            double price = priceManager.getPrice(entry.getKey().getMaterial(), player);
+            if (price > 0.0) {
+                total += price * entry.getValue();
+            }
+        }
+        return total;
     }
 
     private List<ItemStack> toApiItemStacks(Map<ItemSignature, Long> items) {

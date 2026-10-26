@@ -2,10 +2,25 @@
 # Slot positions: 1-9 corresponds to inventory slots 46-54 (bottom row)
 # Valid materials: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
 #
+# Optional GUI title. Supports & colours, {entity}, {ᴇɴᴛɪᴛʏ}, {amount},
+# {current_page}, {total_pages} and PlaceholderAPI placeholders.
+# title_single overrides the title when the spawner stack size is 1.
+# title: "&8Storage {current_page}/{total_pages}"
+# title_single: "&8{entity} Storage"
+#
 # Format:
 #   slot_X:                    # X = slot number (1-9)
 #     material: MATERIAL_NAME  # Material to display (use PLAYER_HEAD for spawner mob head)
+#     item: 'MATERIAL[component=value]'
+#                              # Optional full item instead of material (vanilla /give syntax or nbt:)
 #     custom_texture: "..."    # Optional: Custom texture hash for PLAYER_HEAD (similar to spawner_mobs.yml)
+#     name: "&aCustom name"    # Optional: overrides the language name
+#     lore:                    # Optional: replaces the language lore. Leave it out to keep the
+#       - "&7Total: &6{total_sell_price}"   # automatic loot/price lines.
+#     item_model: mypack:icon  # Optional: item_model component
+#     custom_model_data: 101   # Optional: custom_model_data component
+#     amount: 1                # Optional: stack amount shown (1-99)
+#     hide_tooltip: false      # Optional: hide the hover tooltip entirely
 #     enabled: true/false      # Show/hide button
 #     info_button: true        # Optional: Mark as spawner mob-head info button (shows loot list)
 #     click:

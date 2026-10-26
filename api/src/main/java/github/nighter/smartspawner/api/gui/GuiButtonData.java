@@ -32,6 +32,13 @@ public class GuiButtonData {
     private final Map<String, List<GuiButtonSoundData>> successSounds;
     private final Map<String, List<GuiButtonSoundData>> failSounds;
 
+    private final String displayName;
+    private final List<String> displayLore;
+    private final String itemModel;
+    private final Integer customModelData;
+    private final int amount;
+    private final boolean hideTooltip;
+
     /**
      * Creates button data using the same 1-based slot numbering as GUI layout YAML files.
      */
@@ -59,24 +66,9 @@ public class GuiButtonData {
                          String condition, Map<String, String> actions, boolean infoButton,
                          String customTexture, long cooldownTicks, GuiButtonSoundData clickSound,
                          GuiButtonSoundData successSound, GuiButtonSoundData failSound) {
-        if (cooldownTicks < 0L) {
-            throw new IllegalArgumentException("Button cooldown cannot be negative");
-        }
-        this.buttonType = buttonType;
-        this.slot = slot;
-        this.material = material;
-        this.enabled = enabled;
-        this.condition = condition;
-        this.actions = actions != null ? Collections.unmodifiableMap(new HashMap<>(actions)) : Collections.emptyMap();
-        this.infoButton = infoButton;
-        this.customTexture = customTexture;
-        this.cooldownTicks = cooldownTicks;
-        this.clickSound = clickSound;
-        this.successSound = successSound;
-        this.failSound = failSound;
-        this.clickSounds = immutableSounds(clickSound);
-        this.successSounds = immutableSounds(successSound);
-        this.failSounds = immutableSounds(failSound);
+        this(buttonType, slot, material, enabled, condition, actions, infoButton, customTexture,
+                cooldownTicks, immutableSounds(clickSound), immutableSounds(successSound),
+                immutableSounds(failSound));
     }
 
     public GuiButtonData(String buttonType, int slot, Material material, boolean enabled,
@@ -85,6 +77,22 @@ public class GuiButtonData {
                          Map<String, List<GuiButtonSoundData>> clickSounds,
                          Map<String, List<GuiButtonSoundData>> successSounds,
                          Map<String, List<GuiButtonSoundData>> failSounds) {
+        this(buttonType, slot, material, enabled, condition, actions, infoButton, customTexture,
+                cooldownTicks, clickSounds, successSounds, failSounds,
+                null, null, null, null, 1, false);
+    }
+
+    /**
+     * Full constructor, including the display customisation available to YAML layouts.
+     */
+    public GuiButtonData(String buttonType, int slot, Material material, boolean enabled,
+                         String condition, Map<String, String> actions, boolean infoButton,
+                         String customTexture, long cooldownTicks,
+                         Map<String, List<GuiButtonSoundData>> clickSounds,
+                         Map<String, List<GuiButtonSoundData>> successSounds,
+                         Map<String, List<GuiButtonSoundData>> failSounds,
+                         String displayName, List<String> displayLore, String itemModel,
+                         Integer customModelData, int amount, boolean hideTooltip) {
         if (cooldownTicks < 0L) {
             throw new IllegalArgumentException("Button cooldown cannot be negative");
         }
@@ -105,6 +113,12 @@ public class GuiButtonData {
         this.clickSound = firstSound(this.clickSounds);
         this.successSound = firstSound(this.successSounds);
         this.failSound = firstSound(this.failSounds);
+        this.displayName = displayName;
+        this.displayLore = displayLore == null ? null : List.copyOf(displayLore);
+        this.itemModel = itemModel;
+        this.customModelData = customModelData;
+        this.amount = Math.max(1, Math.min(99, amount));
+        this.hideTooltip = hideTooltip;
     }
 
     /**

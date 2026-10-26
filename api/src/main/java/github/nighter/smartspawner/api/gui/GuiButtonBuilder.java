@@ -34,6 +34,12 @@ public class GuiButtonBuilder {
     private final Map<String, List<GuiButtonSoundData>> clickSounds = new HashMap<>();
     private final Map<String, List<GuiButtonSoundData>> successSounds = new HashMap<>();
     private final Map<String, List<GuiButtonSoundData>> failSounds = new HashMap<>();
+    private String displayName;
+    private List<String> displayLore;
+    private String itemModel;
+    private Integer customModelData;
+    private int amount = 1;
+    private boolean hideTooltip = false;
 
     /**
      * Sets the button type identifier.
@@ -247,7 +253,57 @@ public class GuiButtonBuilder {
     public GuiButtonData build() {
         return new GuiButtonData(buttonType, slot, material, enabled, condition,
                 new HashMap<>(actions), infoButton, customTexture, cooldownTicks,
-                copySounds(clickSounds), copySounds(successSounds), copySounds(failSounds));
+                copySounds(clickSounds), copySounds(successSounds), copySounds(failSounds),
+                displayName, displayLore, itemModel, customModelData, amount, hideTooltip);
+    }
+
+    /**
+     * Sets a custom display name. Supports SmartSpawner's {@code {placeholders}} and
+     * PlaceholderAPI tokens.
+     */
+    public GuiButtonBuilder displayName(String displayName) {
+        this.displayName = displayName;
+        return this;
+    }
+
+    /**
+     * Sets a custom lore, replacing the language default.
+     */
+    public GuiButtonBuilder displayLore(List<String> displayLore) {
+        this.displayLore = displayLore == null ? null : new ArrayList<>(displayLore);
+        return this;
+    }
+
+    /**
+     * Sets the {@code item_model} component, e.g. {@code mypack:custom_icon}.
+     */
+    public GuiButtonBuilder itemModel(String itemModel) {
+        this.itemModel = itemModel;
+        return this;
+    }
+
+    /**
+     * Sets the legacy integer {@code custom_model_data} component.
+     */
+    public GuiButtonBuilder customModelData(Integer customModelData) {
+        this.customModelData = customModelData;
+        return this;
+    }
+
+    /**
+     * Sets the stack amount shown on the button (1-99).
+     */
+    public GuiButtonBuilder amount(int amount) {
+        this.amount = amount;
+        return this;
+    }
+
+    /**
+     * Hides the hover tooltip entirely.
+     */
+    public GuiButtonBuilder hideTooltip(boolean hideTooltip) {
+        this.hideTooltip = hideTooltip;
+        return this;
     }
 
     private GuiButtonBuilder addSound(

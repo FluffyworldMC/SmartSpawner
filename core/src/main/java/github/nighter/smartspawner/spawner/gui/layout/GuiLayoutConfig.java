@@ -51,6 +51,16 @@ public class GuiLayoutConfig {
     @Getter
     private String openSound;
 
+    /** Custom GUI titles from the layout files; {@code null} means "use the language default". */
+    @Getter
+    private String mainTitle;
+    @Getter
+    private String storageTitle;
+    @Getter
+    private String storageSingleTitle;
+    @Getter
+    private String sellConfirmTitle;
+
     public GuiLayoutConfig(SmartSpawner plugin, ExternalGuiLayoutLoader loader,
                            GuiLayoutRegistryImpl registry) {
         this.plugin = plugin;
@@ -73,6 +83,29 @@ public class GuiLayoutConfig {
 
         // Load GUI behaviour settings from the respective layout files
         loadLayoutSettings();
+        loadLayoutTitles();
+    }
+
+    private void loadLayoutTitles() {
+        this.mainTitle = readConfiguredString(resolveLayoutFile(MAIN_GUI_FILE), "title");
+        File storageFile = resolveLayoutFile(STORAGE_GUI_FILE);
+        this.storageTitle = readConfiguredString(storageFile, "title");
+        this.storageSingleTitle = readConfiguredString(storageFile, "title_single");
+        this.sellConfirmTitle = readConfiguredString(resolveLayoutFile(SELL_CONFIRM_GUI_FILE), "title");
+    }
+
+    private String readConfiguredString(File file, String path) {
+        if (file == null) {
+            return null;
+        }
+        try {
+            String value = YamlConfiguration.loadConfiguration(file).getString(path);
+            return value == null || value.isBlank() ? null : value;
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING,
+                    "Failed to read '" + path + "' from " + file.getName() + ": " + e.getMessage(), e);
+            return null;
+        }
     }
 
     private void loadLayoutSettings() {

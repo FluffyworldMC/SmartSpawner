@@ -97,7 +97,7 @@ public class StorageUpdateService {
                 holder.updateOldUsedSlots();
                 
                 // Update inventory title and contents
-                String newTitle = getStorageTitle(spawner, targetPage, newTotalPages);
+                String newTitle = getStorageTitle(viewer, spawner, targetPage, newTotalPages);
                 viewer.getOpenInventory().setTitle(newTitle);
                 spawnerStorageUI.updateDisplay(inventory, spawner, targetPage, newTotalPages);
             } catch (Exception e) {
@@ -136,7 +136,7 @@ public class StorageUpdateService {
      * @param totalPages Total number of pages
      * @return Formatted title
      */
-    private String getStorageTitle(SpawnerData spawner, int page, int totalPages) {
-        return spawnerStorageUI.getStorageTitle(spawner, page, totalPages);
+    private String getStorageTitle(Player viewer, SpawnerData spawner, int page, int totalPages) {
+        return spawnerStorageUI.getStorageTitle(viewer, spawner, page, totalPages);
     }
 }

@@ -2,6 +2,12 @@
 # Slot positions: 1-9 corresponds to inventory slots 46-54 (bottom row)
 # Valid materials: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
 #
+# Optional title: supports & colours, {entity}, {ᴇɴᴛɪᴛʏ}, {amount}, {current_page},
+# {total_pages} and %placeholderapi%. title_single is used when the spawner is not stacked.
+# title: "&8Storage {current_page}/{total_pages}"
+# title_single: "&8{entity} Storage"
+# Buttons also accept item:, name:, lore:, item_model:, custom_model_data:, amount: and hide_tooltip:.
+#
 # Format:
 #   slot_X:                    # X = slot number (1-9)
 #     material: MATERIAL_NAME  # Material to display (use PLAYER_HEAD for spawner mob head)

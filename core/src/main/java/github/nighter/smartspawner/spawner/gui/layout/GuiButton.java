@@ -3,6 +3,7 @@ package github.nighter.smartspawner.spawner.gui.layout;
 import github.nighter.smartspawner.api.gui.GuiButtonSoundData;
 import lombok.Getter;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,18 +25,44 @@ public class GuiButton {
     private final Map<String, List<GuiButtonSoundData>> successSounds;
     private final Map<String, List<GuiButtonSoundData>> failSounds;
 
+    /**
+     * Optional full item template from the layout's {@code item:} key. It carries components
+     * (item model, custom model data, ...) that a plain material cannot express.
+     */
+    private final ItemStack template;
+
+    /** Custom display name from {@code name:}, or {@code null} to use the language default. */
+    private final String displayName;
+
+    /** Custom lore from {@code lore:}, or {@code null} to use the language default. */
+    private final List<String> displayLore;
+
+    /** Custom {@code item_model} component, or {@code null} to leave it untouched. */
+    private final String itemModel;
+
+    /** Custom {@code custom_model_data} component, or {@code null} to leave it untouched. */
+    private final Integer customModelData;
+
+    /** How many items the button stack shows. Defaults to 1. */
+    private final int amount;
+
+    /** Whether to hide the hover tooltip entirely. */
+    private final boolean hideTooltip;
+
     public GuiButton(String buttonType, int slot, Material material, boolean enabled,
                      String condition, Map<String, String> actions, boolean infoButton,
                      String customTexture) {
         this(buttonType, slot, material, enabled, condition, actions, infoButton,
-                customTexture, 0L, Map.of(), Map.of(), Map.of());
+                customTexture, 0L, Map.of(), Map.of(), Map.of(),
+                null, null, null, null, null, 1, false);
     }
 
     public GuiButton(String buttonType, int slot, Material material, boolean enabled,
                      String condition, Map<String, String> actions, boolean infoButton,
                      String customTexture, long cooldownTicks, GuiButtonSoundData clickSound) {
         this(buttonType, slot, material, enabled, condition, actions, infoButton,
-                customTexture, cooldownTicks, singletonSoundMap(clickSound), Map.of(), Map.of());
+                customTexture, cooldownTicks, singletonSoundMap(clickSound), Map.of(), Map.of(),
+                null, null, null, null, null, 1, false);
     }
 
     public GuiButton(String buttonType, int slot, Material material, boolean enabled,
@@ -44,7 +71,8 @@ public class GuiButton {
                      GuiButtonSoundData successSound, GuiButtonSoundData failSound) {
         this(buttonType, slot, material, enabled, condition, actions, infoButton,
                 customTexture, cooldownTicks, singletonSoundMap(clickSound),
-                singletonSoundMap(successSound), singletonSoundMap(failSound));
+                singletonSoundMap(successSound), singletonSoundMap(failSound),
+                null, null, null, null, null, 1, false);
     }
 
     public GuiButton(String buttonType, int slot, Material material, boolean enabled,
@@ -53,9 +81,26 @@ public class GuiButton {
                      Map<String, List<GuiButtonSoundData>> clickSounds,
                      Map<String, List<GuiButtonSoundData>> successSounds,
                      Map<String, List<GuiButtonSoundData>> failSounds) {
+        this(buttonType, slot, material, enabled, condition, actions, infoButton,
+                customTexture, cooldownTicks, clickSounds, successSounds, failSounds,
+                null, null, null, null, null, 1, false);
+    }
+
+    /**
+     * Full constructor, including the per-button display customisation.
+     */
+    public GuiButton(String buttonType, int slot, Material material, boolean enabled,
+                     String condition, Map<String, String> actions, boolean infoButton,
+                     String customTexture, long cooldownTicks,
+                     Map<String, List<GuiButtonSoundData>> clickSounds,
+                     Map<String, List<GuiButtonSoundData>> successSounds,
+                     Map<String, List<GuiButtonSoundData>> failSounds,
+                     ItemStack template, String displayName, List<String> displayLore,
+                     String itemModel, Integer customModelData, int amount, boolean hideTooltip) {
         this.buttonType = buttonType;
         this.slot = slot;
-        this.material = material;
+        this.template = template == null ? null : template.clone();
+        this.material = template != null ? template.getType() : material;
         this.enabled = enabled;
         this.condition = condition;
         this.actions = actions;
@@ -65,6 +110,22 @@ public class GuiButton {
         this.clickSounds = immutableSounds(clickSounds);
         this.successSounds = immutableSounds(successSounds);
         this.failSounds = immutableSounds(failSounds);
+        this.displayName = displayName;
+        this.displayLore = displayLore == null ? null : List.copyOf(displayLore);
+        this.itemModel = itemModel;
+        this.customModelData = customModelData;
+        this.amount = Math.max(1, Math.min(99, amount));
+        this.hideTooltip = hideTooltip;
+    }
+
+    /** Whether this button overrides any part of its rendered display. */
+    public boolean hasCustomDisplay() {
+        return displayName != null
+                || displayLore != null
+                || itemModel != null
+                || customModelData != null
+                || amount != 1
+                || hideTooltip;
     }
 
     public String getAction(String clickType) {

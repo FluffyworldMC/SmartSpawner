@@ -2,9 +2,22 @@
 # Slot positions: 1-27 (3 rows of 9 slots each)
 # Valid materials: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
 #
+# Optional GUI title. Supports & colours, {entity}, {ᴇɴᴛɪᴛʏ},
+# {total_sell_price} and PlaceholderAPI placeholders.
+# title: "&8Confirm sale of {entity}"
+#
 # Format:
 #   slot_X:                    # X = slot number (1-27)
 #     material: MATERIAL_NAME  # Material to display
+#     item: 'MATERIAL[component=value]'
+#                              # Optional full item instead of material (vanilla /give syntax or nbt:)
+#     name: "&aCustom name"    # Optional: overrides the language name
+#     lore:                    # Optional: replaces the language lore
+#       - "&7Price: &6{total_sell_price}"
+#     item_model: mypack:icon  # Optional: item_model component
+#     custom_model_data: 101   # Optional: custom_model_data component
+#     amount: 1                # Optional: stack amount shown (1-99)
+#     hide_tooltip: false      # Optional: hide the hover tooltip entirely
 #     enabled: true/false      # Show/hide button
 #     info_button: true/false  # Optional: Mark as spawner info button (display only)
 #     click:

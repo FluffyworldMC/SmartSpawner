@@ -43,6 +43,7 @@ simpleclaimsystem = { module = "com.github.Xyness:SimpleClaimSystem", version = 
 simpleclaimsystem-api = { module = "com.github.Xyness:SimpleClaimSystem-API", version = "v2.5.10" }
 superiorskyblock = { module = "com.bgsoftware:SuperiorSkyblockAPI", version = "2026.2" }
 towny = { module = "com.palmergames.bukkit.towny:towny", version = "0.103.0.7" }
+ultimateshop = { module = "cn.superiormc.ultimateshop:plugin", version = "4.3.4" }
 vault = { module = "com.github.MilkBowl:VaultAPI", version = "1.7.1" }
 worldguard = { module = "com.sk89q.worldguard:worldguard-bukkit", version = "7.1.0-SNAPSHOT" }
 zmenu = { module = "fr.maxlego08.menu:zmenu-api", version = "1.1.1.9" }

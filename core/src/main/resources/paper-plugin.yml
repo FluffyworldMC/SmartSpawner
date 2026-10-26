@@ -29,6 +29,10 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    UltimateShop:
+      load: BEFORE
+      required: false
+      join-classpath: true
     zShop:
       load: BEFORE
       required: false
@@ -36,6 +40,10 @@ dependencies:
 
     # Economy Plugins
     ExcellentEconomy:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    PlaceholderAPI:
       load: BEFORE
       required: false
       join-classpath: true

@@ -54,7 +54,14 @@ public class GuiLayoutAdapter {
                 data.getCooldownTicks(),
                 data.getClickSounds(),
                 data.getSuccessSounds(),
-                data.getFailSounds()
+                data.getFailSounds(),
+                null,
+                data.getDisplayName(),
+                data.getDisplayLore(),
+                data.getItemModel(),
+                data.getCustomModelData(),
+                data.getAmount(),
+                data.isHideTooltip()
         );
     }
 

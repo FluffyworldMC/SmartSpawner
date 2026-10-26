@@ -15,6 +15,7 @@ import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -715,6 +716,14 @@ public class SpawnerData {
      * Should be called when the cache is dirty or on spawner load
      */
     public void recalculateSellValue() {
+        recalculateSellValue(null);
+    }
+
+    /**
+     * Recalculates the accumulated sell value, resolving prices for {@code player} when the active
+     * shop integration prices per player (UltimateShop conditions/multipliers).
+     */
+    public void recalculateSellValue(Player player) {
         if (lootConfig == null) {
             this.accumulatedSellValue.set(0.0);
             this.sellValueDirty = false;
@@ -722,7 +731,7 @@ public class SpawnerData {
         }
 
         // Get price cache
-        Map<String, Double> priceCache = createPriceCache();
+        Map<String, Double> priceCache = createPriceCache(player);
 
         // Calculate from current inventory
         Map<ItemSignature, Long> items = virtualInventory.getConsolidatedItems();
@@ -758,6 +767,10 @@ public class SpawnerData {
      * shop plugin prices aren't yet available when LootItem.sellPrice is baked in.
      */
     public Map<String, Double> createPriceCache() {
+        return createPriceCache(null);
+    }
+
+    public Map<String, Double> createPriceCache(Player player) {
         if (lootConfig == null) {
             return new java.util.HashMap<>();
         }
@@ -768,7 +781,7 @@ public class SpawnerData {
 
         for (LootItem lootItem : allLootItems) {
             // Use live price from ItemPriceManager; fall back to baked sellPrice if unavailable
-            double price = (priceManager != null) ? priceManager.getPrice(lootItem.material()) : 0.0;
+            double price = (priceManager != null) ? priceManager.getPrice(lootItem.material(), player) : 0.0;
             if (price <= 0.0) {
                 price = lootItem.sellPrice();
             }

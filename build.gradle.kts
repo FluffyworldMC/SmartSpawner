@@ -109,6 +109,13 @@ allprojects {
                 includeGroup("nl.rutgerkok")
             }
         }
+        maven {
+            name = "ultimateshop"
+            url = uri("https://repo.lanink.cn/repository/maven-public/")
+            content {
+                includeGroup("cn.superiormc.ultimateshop")
+            }
+        }
     }
 
     // Compile, runtime and their test counterparts. `shade` is left unmatched so the shaded jar

@@ -1,12 +1,14 @@
 package github.nighter.smartspawner.api.gui;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.spawner.config.ConfiguredItemParser;
 import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -105,7 +107,6 @@ public class ExternalGuiLayoutLoader {
             return false;
         }
 
-        String materialName = config.getString(buttonKey + ".material", "STONE");
         String condition = config.getString(buttonKey + ".condition", null);
         boolean infoButton = config.getBoolean(buttonKey + ".info_button", false);
         String customTexture = config.getString(buttonKey + ".custom_texture", null);
@@ -127,7 +128,8 @@ public class ExternalGuiLayoutLoader {
             return false;
         }
 
-        Material material = parseMaterial(materialName, buttonKey);
+        ButtonDisplay display = new ButtonDisplay();
+        display.apply(config, buttonKey, buttonKey, false);
         int actualSlot = calculateActualSlot(slot, layoutType);
 
         Map<String, String> actions = new HashMap<>();
@@ -139,10 +141,7 @@ public class ExternalGuiLayoutLoader {
                 if (evaluateCondition(conditionKey)) {
                     ConfigurationSection conditionActions = ifSection.getConfigurationSection(conditionKey);
                     if (conditionActions != null) {
-                        String conditionalMaterial = conditionActions.getString("material");
-                        if (conditionalMaterial != null) {
-                            material = parseMaterial(conditionalMaterial, buttonKey);
-                        }
+                        display.apply(conditionActions, "", buttonKey + ".if." + conditionKey, true);
 
                         String conditionalCustomTexture = conditionActions.getString("custom_texture");
                         if (conditionalCustomTexture != null) {
@@ -167,10 +166,100 @@ public class ExternalGuiLayoutLoader {
                     buttonKey);
         }
 
-        GuiButton button = new GuiButton(buttonKey, actualSlot, material, true, condition, actions,
-                infoButton, customTexture, cooldownTicks, clickSounds, successSounds, failSounds);
+        GuiButton button = new GuiButton(buttonKey, actualSlot, display.material, true, condition,
+                actions, infoButton, customTexture, cooldownTicks, clickSounds, successSounds,
+                failSounds, display.template, display.name, display.lore, display.itemModel,
+                display.customModelData, display.amount, display.hideTooltip);
         layout.addButton(buttonKey, button);
         return true;
+    }
+
+    /**
+     * Mutable holder for the per-button display keys. The base section fills defaults; an
+     * {@code if:} branch only overrides the keys it actually declares.
+     */
+    private final class ButtonDisplay {
+        private Material material = Material.STONE;
+        private ItemStack template;
+        private String name;
+        private List<String> lore;
+        private String itemModel;
+        private Integer customModelData;
+        private int amount = 1;
+        private boolean hideTooltip;
+
+        private void apply(ConfigurationSection section, String basePath, String buttonKey,
+                           boolean conditional) {
+            String materialPath = path(basePath, "material");
+            String itemPath = path(basePath, "item");
+
+            if (section.contains(itemPath)) {
+                String rawItem = section.getString(itemPath);
+                if (rawItem != null && !rawItem.isBlank()) {
+                    try {
+                        template = ConfiguredItemParser.parse(rawItem);
+                        material = template.getType();
+                    } catch (IllegalArgumentException e) {
+                        if (logger != null) {
+                            logger.warning("Invalid item '" + rawItem + "' for button " + buttonKey
+                                    + ": " + e.getMessage() + ". Falling back to the material.");
+                        }
+                        template = null;
+                        material = parseMaterial(
+                                section.getString(materialPath, "STONE"), buttonKey);
+                    }
+                } else if (conditional) {
+                    template = null;
+                }
+            } else if (section.contains(materialPath) || !conditional) {
+                String materialName = section.getString(materialPath, "STONE");
+                template = null;
+                material = parseMaterial(materialName, buttonKey);
+            }
+
+            String namePath = path(basePath, "name");
+            if (section.contains(namePath)) {
+                name = section.getString(namePath);
+            }
+
+            String lorePath = path(basePath, "lore");
+            if (section.contains(lorePath)) {
+                lore = readLore(section, lorePath);
+            }
+
+            String itemModelPath = path(basePath, "item_model");
+            if (section.contains(itemModelPath)) {
+                String rawModel = section.getString(itemModelPath);
+                itemModel = rawModel == null || rawModel.isBlank() ? null : rawModel.trim();
+            }
+
+            String customModelDataPath = path(basePath, "custom_model_data");
+            if (section.contains(customModelDataPath)) {
+                customModelData = section.isInt(customModelDataPath)
+                        ? section.getInt(customModelDataPath) : null;
+            }
+
+            String amountPath = path(basePath, "amount");
+            if (section.contains(amountPath)) {
+                amount = Math.max(1, Math.min(99, section.getInt(amountPath, 1)));
+            }
+
+            String hideTooltipPath = path(basePath, "hide_tooltip");
+            if (section.contains(hideTooltipPath)) {
+                hideTooltip = section.getBoolean(hideTooltipPath, false);
+            }
+        }
+    }
+
+    private List<String> readLore(ConfigurationSection section, String lorePath) {
+        if (section.isList(lorePath)) {
+            return section.getStringList(lorePath);
+        }
+        String single = section.getString(lorePath);
+        if (single == null) {
+            return List.of();
+        }
+        return List.of(single.split("\n", -1));
     }
 
     private long parseCooldown(String value, String buttonKey) {

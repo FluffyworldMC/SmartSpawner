@@ -47,7 +47,7 @@ public class PricesGUI implements Listener {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
 
         // Collect all unique items with prices from all entity loot configs
-        Map<Material, PriceInfo> allItems = collectAllPriceableItems();
+        Map<Material, PriceInfo> allItems = collectAllPriceableItems(player);
         
         if (allItems.isEmpty()) {
             messageService.sendMessage(player, "prices.no_priceable_items");
@@ -88,7 +88,7 @@ public class PricesGUI implements Listener {
         player.openInventory(inventory);
     }
 
-    private Map<Material, PriceInfo> collectAllPriceableItems() {
+    private Map<Material, PriceInfo> collectAllPriceableItems(Player player) {
         Map<Material, PriceInfo> allItems = new HashMap<>();
 
         for (EntityType entityType : EntityType.values()) {
@@ -99,12 +99,12 @@ public class PricesGUI implements Listener {
                 if (!lootItem.isAvailable()) continue;
 
                 Material material = lootItem.material();
-                double finalPrice = priceManager.getPrice(material);
+                double finalPrice = priceManager.getPrice(material, player);
                 
                 if (finalPrice > 0) {
                     // Get individual price components
                     double customPrice = getCustomPrice(material);
-                    double shopPrice = getShopPrice(material);
+                    double shopPrice = getShopPrice(material, player);
                     
                     // Determine which source is being used
                     String priceSource = determinePriceSource(material, finalPrice, customPrice, shopPrice);
@@ -122,9 +122,9 @@ public class PricesGUI implements Listener {
         return allPrices.getOrDefault(material.name(), 0.0);
     }
 
-    private double getShopPrice(Material material) {
+    private double getShopPrice(Material material, Player player) {
         if (priceManager.getShopIntegrationManager() == null) return 0.0;
-        return priceManager.getShopIntegrationManager().getPrice(material);
+        return priceManager.getShopIntegrationManager().getPrice(material, player);
     }
 
     private String determinePriceSource(Material material, double finalPrice, double customPrice, double shopPrice) {

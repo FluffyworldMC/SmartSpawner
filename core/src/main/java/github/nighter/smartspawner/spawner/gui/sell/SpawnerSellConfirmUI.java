@@ -7,7 +7,10 @@ import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.utils.ItemTooltipUtil;
 import github.nighter.smartspawner.spawner.config.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
+import github.nighter.smartspawner.spawner.gui.layout.GuiButtonRenderer;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
+import github.nighter.smartspawner.spawner.gui.layout.GuiText;
+import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
 import github.nighter.smartspawner.spawner.lootgen.loot.EntityLootConfig;
 import github.nighter.smartspawner.spawner.lootgen.loot.LootItem;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -116,8 +119,14 @@ public class SpawnerSellConfirmUI {
                     player, sourceButton, sourceClickType);
         }
 
-        // Cache title - no placeholders needed
-        String title = languageManager.getGuiTitle("gui_title_sell_confirm", null);
+        // Custom title from the layout file, otherwise the language default.
+        String customTitle = plugin.getGuiLayoutConfig().getSellConfirmTitle();
+        String title;
+        if (customTitle != null) {
+            title = GuiText.render(player, customTitle, createPlaceholders(player, spawner, collectExp));
+        } else {
+            title = languageManager.getGuiTitle("gui_title_sell_confirm", null);
+        }
         GuiLayout layout = plugin.getGuiLayoutConfig().getSellConfirmLayout(spawner, player);
         Inventory gui = Bukkit.createInventory(
                 new SpawnerSellConfirmHolder(spawner, previousGui, collectExp, layout), GUI_SIZE, title);
@@ -130,7 +139,7 @@ public class SpawnerSellConfirmUI {
     private void populateSellConfirmGui(Inventory gui, Player player, SpawnerData spawner,
                                         boolean collectExp, GuiLayout layout) {
         // OPTIMIZATION: Create placeholders once and reuse for all buttons
-        Map<String, String> placeholders = createPlaceholders(spawner, collectExp);
+        Map<String, String> placeholders = createPlaceholders(player, spawner, collectExp);
 
         if (layout == null) {
             plugin.getLogger().warning("Sell confirm layout not loaded, using empty GUI");
@@ -150,7 +159,7 @@ public class SpawnerSellConfirmUI {
 
             // Check if this is an info button (spawner display)
             if (button.isInfoButton()) {
-                buttonItem = createSpawnerInfoButton(player, spawner, placeholders);
+                buttonItem = createSpawnerInfoButton(player, spawner, placeholders, button);
             } else {
                 // OPTIMIZATION: Use getAnyActionFromButton to check all click types
                 String action = getAnyActionFromButton(button);
@@ -160,14 +169,14 @@ public class SpawnerSellConfirmUI {
 
                 switch (action) {
                     case "cancel":
-                        buttonItem = createCancelButton(button.getMaterial(), placeholders);
+                        buttonItem = createCancelButton(button, player, placeholders);
                         break;
                     case "confirm":
-                        buttonItem = createConfirmButton(button.getMaterial(), placeholders, collectExp);
+                        buttonItem = createConfirmButton(button, player, placeholders, collectExp);
                         break;
                     case "none":
                         // Display-only button (spawner info) - fallback for old format
-                        buttonItem = createSpawnerInfoButton(player, spawner, placeholders);
+                        buttonItem = createSpawnerInfoButton(player, spawner, placeholders, button);
                         break;
                     default:
                         plugin.getLogger().warning("Unknown action in sell confirm GUI: " + action);
@@ -187,21 +196,22 @@ public class SpawnerSellConfirmUI {
         };
     }
 
-    private ItemStack createCancelButton(Material material, Map<String, String> placeholders) {
+    private ItemStack createCancelButton(GuiButton button, Player player, Map<String, String> placeholders) {
         String name = languageManager.getGuiItemName("button_sell_cancel.name", placeholders);
         String[] lore = languageManager.getGuiItemLore("button_sell_cancel.lore", placeholders);
-        return createButton(material, name, lore);
+        return createActionButton(button, player, placeholders, name, lore);
     }
 
-    private ItemStack createConfirmButton(Material material, Map<String, String> placeholders, boolean collectExp) {
+    private ItemStack createConfirmButton(GuiButton button, Player player, Map<String, String> placeholders, boolean collectExp) {
         // Use different button key based on whether exp is collected
         String buttonKey = collectExp ? "button_sell_confirm_with_exp" : "button_sell_confirm";
         String name = languageManager.getGuiItemName(buttonKey + ".name", placeholders);
         String[] lore = languageManager.getGuiItemLore(buttonKey + ".lore", placeholders);
-        return createButton(material, name, lore);
+        return createActionButton(button, player, placeholders, name, lore);
     }
 
-    private ItemStack createSpawnerInfoButton(Player player, SpawnerData spawner, Map<String, String> placeholders) {
+    private ItemStack createSpawnerInfoButton(Player player, SpawnerData spawner,
+                                              Map<String, String> placeholders, GuiButton button) {
         // Build loot item components for {loot_items} placeholder
         Map<ItemSignature, Long> storedItems = spawner.getVirtualInventory().getConsolidatedItems();
         List<Component> lootComponents = buildSellInfoLootComponents(spawner, storedItems);
@@ -218,9 +228,21 @@ public class SpawnerSellConfirmUI {
                 meta.lore(lore);
             }
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
+            GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
         };
 
-        ItemStack spawnerItem = SpawnerMobHeadTexture.getSpawnerHead(spawner, metaModifier);
+        ItemStack spawnerItem;
+        if (button != null && button.getMaterial() != Material.PLAYER_HEAD) {
+            spawnerItem = GuiButtonRenderer.createBaseItem(button);
+            spawnerItem.editMeta(metaModifier);
+        } else if (button != null && button.getCustomTexture() != null
+                && !button.getCustomTexture().trim().isEmpty()) {
+            spawnerItem = SpawnerMobHeadTexture.getCustomHeadFromTexture(
+                    button.getCustomTexture(), metaModifier);
+        } else {
+            spawnerItem = SpawnerMobHeadTexture.getSpawnerHead(spawner, metaModifier);
+        }
+        GuiButtonRenderer.finish(spawnerItem, button);
 
         if (spawnerItem.getType() == Material.SPAWNER) {
             ItemTooltipUtil.hideTooltip(spawnerItem);
@@ -268,7 +290,7 @@ public class SpawnerSellConfirmUI {
         return components;
     }
 
-    private Map<String, String> createPlaceholders(SpawnerData spawner, boolean collectExp) {
+    private Map<String, String> createPlaceholders(Player player, SpawnerData spawner, boolean collectExp) {
         // OPTIMIZATION: Calculate initial capacity to avoid HashMap resizing
         Map<String, String> placeholders = new HashMap<>(12);
 
@@ -290,8 +312,9 @@ public class SpawnerSellConfirmUI {
         placeholders.put("ᴇɴᴛɪᴛʏ", languageManager.getSmallCaps(entityName));
 
         // OPTIMIZATION: Check sell value dirty only once
-        if (spawner.isSellValueDirty()) {
-            spawner.recalculateSellValue();
+        ItemPriceManager priceManager = plugin.getItemPriceManager();
+        if (spawner.isSellValueDirty() || (priceManager != null && priceManager.usesPlayerPricing())) {
+            spawner.recalculateSellValue(player);
         }
 
         // OPTIMIZATION: Get all values in single pass
@@ -311,10 +334,9 @@ public class SpawnerSellConfirmUI {
         return placeholders;
     }
 
-    private ItemStack createButton(Material material, String name, String[] lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
+    private ItemStack createActionButton(GuiButton button, Player player,
+                                         Map<String, String> placeholders, String name, String[] lore) {
+        Consumer<ItemMeta> metaModifier = meta -> {
             if (name != null) {
                 meta.setDisplayName(name);
             }
@@ -322,8 +344,18 @@ public class SpawnerSellConfirmUI {
                 meta.setLore(Arrays.asList(lore));
             }
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
-            item.setItemMeta(meta);
+            GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
+        };
+
+        ItemStack item;
+        if (button.getMaterial() == Material.PLAYER_HEAD
+                && button.getCustomTexture() != null && !button.getCustomTexture().trim().isEmpty()) {
+            item = SpawnerMobHeadTexture.getCustomHeadFromTexture(button.getCustomTexture(), metaModifier);
+        } else {
+            item = GuiButtonRenderer.createBaseItem(button);
+            item.editMeta(metaModifier);
         }
+        GuiButtonRenderer.finish(item, button);
         return item;
     }
 

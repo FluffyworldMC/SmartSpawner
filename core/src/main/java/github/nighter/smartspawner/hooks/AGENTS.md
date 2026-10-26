@@ -102,9 +102,12 @@ material the owner deletes is not added back on the next start. It is also the o
 writes to at runtime, through `setPrice` / `removePrice`.
 
 `ShopIntegrationManager` picks one `activeProvider` from `providers/`: EconomyShopGUI, ShopGUI+,
-zShop. Either honours `shop_integration.preferred_plugin` or auto-detects the first available. A new
-shop plugin means implementing `ShopProvider` (`getPluginName`, `isAvailable`, `getSellPrice`) and
-adding a case to that switch.
+UltimateShop, zShop. Either honours `shop_integration.preferred_plugin` or auto-detects the first
+available. A new shop plugin means implementing `ShopProvider` (`getPluginName`, `isAvailable`,
+`getSellPrice`) and adding a case to that switch. Providers whose prices depend on the buyer/seller
+override `getSellPrice(Material, Player)` and `supportsPlayerPricing()`; `ItemPriceManager.getPrice`
+has a matching player-aware overload, and the GUI/sell paths re-price for the viewer when that flag is
+true. UltimateShop uses this to honour per-player conditions and sell multipliers.
 
 `CurrencyManager` handles the payout side (Vault, ExcellentEconomy, and the `currency` key). Note the
 historical rename: `COINSENGINE` migrates to `EXCELLENTECONOMY`, handled in

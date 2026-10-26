@@ -35,6 +35,7 @@ dependencies {
     compileOnly(libs.excellenteconomy)
     compileOnly(libs.nightcore)
     compileOnly(libs.economyshopgui)
+    compileOnly(libs.ultimateshop)
     compileOnly(libs.bentobox)
     compileOnly(libs.redprotect.core) {
         exclude(group = "*")

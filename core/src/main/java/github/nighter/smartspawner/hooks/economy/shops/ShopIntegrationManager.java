@@ -6,9 +6,11 @@ import github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui.
 import github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui.ESGUICompatibilityHandler;
 import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.ShopGuiPlusProvider;
 import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.SpawnerHook;
+import github.nighter.smartspawner.hooks.economy.shops.providers.ultimateshop.UltimateShopProvider;
 import github.nighter.smartspawner.hooks.economy.shops.providers.zshop.ZShopProvider;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
@@ -82,6 +84,11 @@ public class ShopIntegrationManager {
         }
 
         // registerProviderIfAvailable("ZShop", () -> new ZShopProvider(plugin));
+
+        // Only try UltimateShop if the plugin is actually present and enabled.
+        if (isPluginAvailable("UltimateShop")) {
+            registerProviderIfAvailable("UltimateShop", () -> new UltimateShopProvider(plugin));
+        }
     }
 
     private boolean tryRegisterSpecificProvider(String providerName) {
@@ -122,6 +129,12 @@ public class ShopIntegrationManager {
                 case "zshop":
                     if (isPluginAvailable("ZShop")) {
                         registerProviderIfAvailable("ZShop", () -> new ZShopProvider(plugin));
+                        return !availableProviders.isEmpty();
+                    }
+                    break;
+                case "ultimateshop":
+                    if (isPluginAvailable("UltimateShop")) {
+                        registerProviderIfAvailable("UltimateShop", () -> new UltimateShopProvider(plugin));
                         return !availableProviders.isEmpty();
                     }
                     break;
@@ -177,6 +190,22 @@ public class ShopIntegrationManager {
         } catch (Exception e) {
             return 0.0;
         }
+    }
+
+    public double getPrice(Material material, Player player) {
+        if (activeProvider == null || material == null) {
+            return 0.0;
+        }
+
+        try {
+            return activeProvider.getSellPrice(material, player);
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
+    public boolean supportsPlayerPricing() {
+        return activeProvider != null && activeProvider.supportsPlayerPricing();
     }
 
     public String getActiveShopPlugin() {

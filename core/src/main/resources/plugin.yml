@@ -10,10 +10,12 @@ softdepend:
   - EconomyShopGUI
   - EconomyShopGUI-Premium
   - ShopGUIPlus
+  - UltimateShop
   - zShop
 
   # Utility/Economy Plugins
   - ExcellentEconomy
+  - PlaceholderAPI
   - Vault
 
   # Protection/Region Plugins

@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
@@ -156,22 +157,44 @@ public class ItemPriceManager {
     }
 
     public double getPrice(Material material) {
+        return getPrice(material, null);
+    }
+
+    /**
+     * Price lookup with the selling player in scope. Only player-aware shop providers change their
+     * answer; every other source ignores the player.
+     */
+    public double getPrice(Material material, Player player) {
         if (material == null || !economyEnabled) return 0.0;
 
         switch (priceSourceMode) {
             case CUSTOM_ONLY:
                 return getCustomPrice(material);
             case SHOP_ONLY:
-                return getShopPrice(material);
+                return getShopPrice(material, player);
             case CUSTOM_PRIORITY:
                 double customPrice = getCustomPrice(material);
-                return customPrice > 0 ? customPrice : getShopPrice(material);
+                return customPrice > 0 ? customPrice : getShopPrice(material, player);
             case SHOP_PRIORITY:
-                double shopPrice = getShopPrice(material);
+                double shopPrice = getShopPrice(material, player);
                 return shopPrice > 0 ? shopPrice : getCustomPrice(material);
             default:
                 return defaultPrice;
         }
+    }
+
+    /**
+     * Whether the effective price source can return a different price per player. GUI paths use this
+     * to decide whether the cached spawner sell value must be refreshed for the viewer.
+     */
+    public boolean usesPlayerPricing() {
+        if (!economyEnabled || !shopIntegrationEnabled || shopIntegrationManager == null) {
+            return false;
+        }
+        if (priceSourceMode == PriceSourceMode.CUSTOM_ONLY) {
+            return false;
+        }
+        return shopIntegrationManager.supportsPlayerPricing();
     }
 
     private double getCustomPrice(Material material) {
@@ -180,8 +203,12 @@ public class ItemPriceManager {
     }
 
     private double getShopPrice(Material material) {
+        return getShopPrice(material, null);
+    }
+
+    private double getShopPrice(Material material, Player player) {
         if (!economyEnabled || !shopIntegrationEnabled || shopIntegrationManager == null) return 0.0;
-        return shopIntegrationManager.getPrice(material);
+        return shopIntegrationManager.getPrice(material, player);
     }
 
     public void setPrice(Material material, double price) {

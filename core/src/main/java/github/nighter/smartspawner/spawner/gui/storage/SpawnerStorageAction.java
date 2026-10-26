@@ -574,7 +574,7 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void updateInventoryTitle(Player player, SpawnerData spawner, int page, int totalPages) {
-        String newTitle = plugin.getSpawnerStorageUI().getStorageTitle(spawner, page, totalPages);
+        String newTitle = plugin.getSpawnerStorageUI().getStorageTitle(player, spawner, page, totalPages);
 
         try {
             player.getOpenInventory().setTitle(newTitle);

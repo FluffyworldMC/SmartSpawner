@@ -22,6 +22,7 @@ import github.nighter.smartspawner.config.Config;
 import github.nighter.smartspawner.extras.HopperConfig;
 import github.nighter.smartspawner.extras.HopperService;
 import github.nighter.smartspawner.hooks.IntegrationManager;
+import github.nighter.smartspawner.hooks.PlaceholderApiHook;
 import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
 import github.nighter.smartspawner.hooks.economy.SellIntegrationConfigUpdater;
 import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.SpawnerProvider;
@@ -183,6 +184,9 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         // Initialize plugin integrations
         this.integrationManager = new IntegrationManager(this);
         integrationManager.initializeIntegrations();
+
+        // Resolve the optional PlaceholderAPI bridge once, before any GUI text is rendered.
+        PlaceholderApiHook.initialize();
 
         // Check for data migration needs
         migrateDataIfNeeded();
