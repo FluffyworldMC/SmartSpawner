@@ -1,6 +1,6 @@
 [versions]
 # Only versions shared by more than one coordinate. Single-use versions stay inline below.
-paper = "1.21.11-R0.1-SNAPSHOT"
+paper = "26.3.build.214-stable"
 lombok = "1.18.48"
 redprotect = "8.1.2"
 
