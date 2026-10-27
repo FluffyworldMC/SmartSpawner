@@ -29,7 +29,6 @@ public class LanguageManager {
     private final PlaceholderFormatter placeholderFormatter;
     private final SmallCapsFormatter smallCapsFormatter;
     private final MessageLanguageSection messages;
-    private final GuiLanguageSection guiLanguage;
     private final GuiLanguageSection commandGuiLanguage;
     private final ItemLanguageSection items;
     private final FormattingLanguageSection formatting;
@@ -57,7 +56,6 @@ public class LanguageManager {
                 placeholderFormatter::apply,
                 placeholderFormatter::applyOnlyPlaceholders
         );
-        guiLanguage = createGuiSection("GUI", LanguageFileType.GUI);
         commandGuiLanguage = createGuiSection("command GUI", LanguageFileType.COMMAND_GUI);
         items = new ItemLanguageSection(
                 repository::current,
@@ -79,9 +77,7 @@ public class LanguageManager {
     private GuiLanguageSection createGuiSection(String label, LanguageFileType fileType) {
         return new GuiLanguageSection(
                 label,
-                () -> fileType == LanguageFileType.COMMAND_GUI
-                        ? repository.current().commandGui()
-                        : repository.current().gui(),
+                () -> repository.current().commandGui(),
                 () -> repository.isActive(fileType),
                 placeholderFormatter::apply,
                 1000,
@@ -151,55 +147,8 @@ public class LanguageManager {
         return messages.commandConfig(path, defaultValue, placeholders);
     }
 
-    public GuiLanguageSection gui() {
-        return guiLanguage;
-    }
-
     public GuiLanguageSection commandGui() {
         return commandGuiLanguage;
-    }
-
-    public String getGuiTitle(String key) {
-        return guiLanguage.title(key);
-    }
-
-    public String getGuiTitle(String key, Map<String, String> placeholders) {
-        return guiLanguage.title(key, placeholders);
-    }
-
-    public String getGuiConfigString(String key, String defaultValue) {
-        return guiLanguage.configString(key, defaultValue);
-    }
-
-    public String getGuiItemName(String key) {
-        return guiLanguage.name(key);
-    }
-
-    public String getGuiItemName(String key, Map<String, String> placeholders) {
-        return guiLanguage.name(key, placeholders);
-    }
-
-    public String[] getGuiItemLore(String key) {
-        return guiLanguage.lore(key);
-    }
-
-    public String[] getGuiItemLore(String key, Map<String, String> placeholders) {
-        return guiLanguage.lore(key, placeholders);
-    }
-
-    public List<String> getGuiItemLoreAsList(String key) {
-        return guiLanguage.loreList(key);
-    }
-
-    public List<String> getGuiItemLoreAsList(String key, Map<String, String> placeholders) {
-        return guiLanguage.loreList(key, placeholders);
-    }
-
-    public List<String> getGuiItemLoreWithMultilinePlaceholders(
-            String key,
-            Map<String, String> placeholders
-    ) {
-        return guiLanguage.loreWithMultilinePlaceholders(key, placeholders);
     }
 
     public String getVanillaItemName(Material material) {
@@ -246,29 +195,11 @@ public class LanguageManager {
         return items.translatableLootLine(templateKey, material, amount, chance);
     }
 
-    public Component buildTranslatableGuiLootLine(
-            String templateKey,
-            Material material,
-            String amount,
-            String chance
-    ) {
-        return guiLanguage.translatableLootLine(templateKey, material, amount, chance);
-    }
-
     /**
      * As above, but names the item from a real {@link ItemStack} so its effective name is used (a tipped
      * arrow shows "Arrow of Strength", not "Tipped Arrow"). Falls back to the material name when the item
      * is null.
      */
-    public Component buildTranslatableGuiLootLine(
-            String templateKey,
-            ItemStack item,
-            String amount,
-            String chance
-    ) {
-        return guiLanguage.translatableLootLine(templateKey, getItemDisplayName(item), amount, chance);
-    }
-
     public Component buildTranslatableLootLine(
             String templateKey,
             ItemStack item,
@@ -301,15 +232,6 @@ public class LanguageManager {
         return items.loreComponents(key, stringPlaceholders, lootItemComponents, emptyLootKey);
     }
 
-    public List<Component> buildGuiLoreAsComponents(
-            String key,
-            Map<String, String> stringPlaceholders,
-            List<Component> lootItemComponents,
-            String emptyLootKey
-    ) {
-        return guiLanguage.loreComponents(key, stringPlaceholders, lootItemComponents, emptyLootKey);
-    }
-
     public String formatNumber(double number) {
         return formatting.number(number);
     }
@@ -325,7 +247,6 @@ public class LanguageManager {
     public void clearCache() {
         cache.clear();
         items.clearCache();
-        guiLanguage.clearCache();
         commandGuiLanguage.clearCache();
     }
 
@@ -345,10 +266,6 @@ public class LanguageManager {
         return placeholderFormatter.formatEnumName(enumName);
     }
 
-    public String getColorCode(String path) {
-        return guiLanguage.colorCode(path);
-    }
-
     public Map<String, Object> getCacheStats() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("string_cache_size", cache.getStringCacheSize());
@@ -357,7 +274,6 @@ public class LanguageManager {
         stats.put("lore_cache_capacity", cache.getLoreCacheCapacity());
         stats.put("lore_list_cache_size", cache.getLoreListCacheSize());
         stats.put("lore_list_cache_capacity", cache.getLoreListCacheCapacity());
-        guiLanguage.addCacheStats(stats, "gui");
         commandGuiLanguage.addCacheStats(stats, "command_gui");
         stats.put("entity_name_cache_size", cache.getEntityNameCacheSize());
         stats.put("entity_name_cache_capacity", cache.getEntityNameCacheCapacity());

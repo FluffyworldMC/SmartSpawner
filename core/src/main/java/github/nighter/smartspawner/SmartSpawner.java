@@ -49,6 +49,7 @@ import github.nighter.smartspawner.spawner.gui.layout.GuiLayoutConfig;
 import github.nighter.smartspawner.spawner.gui.layout.GuiButtonInteractionService;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuAction;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
+import github.nighter.smartspawner.spawner.gui.member.SpawnerMemberUI;
 import github.nighter.smartspawner.spawner.gui.sell.SpawnerSellConfirmListener;
 import github.nighter.smartspawner.spawner.gui.sell.SpawnerSellConfirmUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageAction;
@@ -116,6 +117,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private SpawnerMenuUI spawnerMenuUI;
     private SpawnerStorageUI spawnerStorageUI;
     private FilterConfigUI filterConfigUI;
+    private SpawnerMemberUI spawnerMemberUI;
     private SpawnerSellConfirmUI spawnerSellConfirmUI;
 
     // Core handlers
@@ -307,6 +309,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.guiButtonInteractionService = new GuiButtonInteractionService(this);
         this.spawnerStorageUI = new SpawnerStorageUI(this);
         this.filterConfigUI = new FilterConfigUI(this);
+        this.spawnerMemberUI = new SpawnerMemberUI(this);
         this.spawnerMenuUI = new SpawnerMenuUI(this);
         this.spawnerSellConfirmUI = new SpawnerSellConfirmUI(this);
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
@@ -432,6 +435,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         // Note: spawnerGuiViewManager registers its own listeners internally
         pm.registerEvents(spawnerClickManager, this);
         pm.registerEvents(spawnerMenuAction, this);
+        pm.registerEvents(spawnerMemberUI, this);
         pm.registerEvents(worldEventHandler, this);
         pm.registerEvents(spawnerListGUI, this);
         pm.registerEvents(spawnerManagementHandler, this);
@@ -557,6 +561,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         spawnerStorageAction.loadConfig();
         spawnerStorageUI.reload();
         filterConfigUI.reload();
+        spawnerMemberUI.reload();
 
         // Reload sell confirm UI to update cached layout
         if (spawnerSellConfirmUI != null) {
@@ -650,6 +655,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (hopperService != null) hopperService.cleanup();
         if (spawnerClickManager != null) spawnerClickManager.cleanup();
         if (spawnerStorageUI != null) spawnerStorageUI.cleanup();
+        if (spawnerMemberUI != null) spawnerMemberUI.cleanup();
     }
 
     // Spawner Provider for ShopGUI+ integration

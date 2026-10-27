@@ -19,8 +19,8 @@ import java.io.File;
  */
 public class GuiLayoutUpdater {
     private static final String GUI_LAYOUTS_DIR = "gui_layouts";
-    private static final String[] LAYOUT_FILES  = {"storage_gui.yml", "main_gui.yml", "sell_confirm_gui.yml"};
-    private static final String[] LAYOUT_NAMES  = {"default", "DonutSMP", "DonutSMP_v2"};
+    private static final String[] LAYOUT_FILES  = {"storage_gui.yml", "main_gui.yml", "sell_confirm_gui.yml", "filter_gui.yml", "members_gui.yml"};
+    private static final String[] LAYOUT_NAMES  = {"default"};
     private static final String BUTTON_PREFIX   = "slot_";
 
     /** Matches the top-level {@code slot_*} button sections, the ones whose key encodes a position. */

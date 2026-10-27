@@ -3,6 +3,9 @@ package github.nighter.smartspawner.spawner.gui.synchronization.services;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
+import github.nighter.smartspawner.spawner.gui.layout.GuiLayoutConfig;
+import github.nighter.smartspawner.spawner.gui.layout.GuiText;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuHolder;
 import github.nighter.smartspawner.spawner.gui.synchronization.managers.ViewerTrackingManager;
 import github.nighter.smartspawner.spawner.gui.synchronization.utils.LootPreGenerationHelper;
@@ -32,7 +35,6 @@ public class TimerUpdateService {
     private static final Pattern TIMER_PATTERN = Pattern.compile("\\d{2}:\\d{2}");
 
     private final SmartSpawner plugin;
-    private final LanguageManager languageManager;
     private final LootPreGenerationHelper lootHelper;
     private final ViewerTrackingManager viewerTrackingManager;
 
@@ -53,7 +55,6 @@ public class TimerUpdateService {
 
     public TimerUpdateService(SmartSpawner plugin, ViewerTrackingManager viewerTrackingManager) {
         this.plugin = plugin;
-        this.languageManager = plugin.getLanguageManager();
         this.lootHelper = new LootPreGenerationHelper(plugin);
         this.viewerTrackingManager = viewerTrackingManager;
         initializeCachedStrings();
@@ -63,44 +64,58 @@ public class TimerUpdateService {
      * Initializes cached strings and detects timer placeholder usage.
      */
     private void initializeCachedStrings() {
-        cachedInactiveText = languageManager.getGuiItemName("spawner_info_item.lore_inactive");
-        cachedFullText = languageManager.getGuiItemName("spawner_info_item.lore_full");
-        cachedNoLootText = languageManager.getGuiItemName("spawner_info_item.lore_no_loot");
-        checkTimerPlaceholderUsage();
+        GuiButton info = infoButton();
+        cachedInactiveText = text(info, "status_inactive");
+        cachedFullText = text(info, "status_full");
+        cachedNoLootText = text(info, "status_no_loot");
+        checkTimerPlaceholderUsage(info);
+    }
+
+    private GuiButton infoButton() {
+        GuiLayoutConfig config = plugin.getGuiLayoutConfig();
+        if (config == null) {
+            return null;
+        }
+        for (GuiButton button : config.getCurrentMainLayout().getAllButtons().values()) {
+            if (button.isInfoButton()) {
+                return button;
+            }
+        }
+        return null;
+    }
+
+    private String text(GuiButton button, String key) {
+        String value = button != null ? button.getText(key) : null;
+        return value != null ? GuiText.render(null, value, Map.of()) : "";
     }
 
     /**
      * Checks if the GUI configuration uses {time} placeholders.
      */
-    private void checkTimerPlaceholderUsage() {
+    private void checkTimerPlaceholderUsage(GuiButton info) {
         try {
-            String[] loreLines = languageManager.getGuiItemLore("spawner_info_item.lore");
-            String[] loreNoShopLines = languageManager.getGuiItemLore("spawner_info_item.lore_no_shop");
-
-            boolean hasTimers = false;
-
-            if (loreLines != null) {
-                for (String line : loreLines) {
-                    if (line != null && line.contains("{time}")) {
-                        hasTimers = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!hasTimers && loreNoShopLines != null) {
-                for (String line : loreNoShopLines) {
-                    if (line != null && line.contains("{time}")) {
-                        hasTimers = true;
-                        break;
-                    }
-                }
-            }
-
+            boolean hasTimers = info != null
+                    && (containsTimer(info.getDisplayName()) || containsTimer(info.getDisplayLore()));
             hasTimerPlaceholders = hasTimers;
         } catch (Exception e) {
             hasTimerPlaceholders = true; // Fallback to enabled if we can't determine
         }
+    }
+
+    private boolean containsTimer(List<String> lines) {
+        if (lines == null) {
+            return false;
+        }
+        for (String line : lines) {
+            if (containsTimer(line)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsTimer(String line) {
+        return line != null && line.contains("{time}");
     }
 
     /**

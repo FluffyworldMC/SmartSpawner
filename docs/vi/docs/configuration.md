@@ -36,8 +36,6 @@ Thư mục ngôn ngữ được tải từ <code>plugins/SmartSpawner/language/<
 | Locale | Ngôn ngữ |
 |--------|----------|
 | <code>en_US</code> | Tiếng Anh |
-| <code>en_US_DonutSMP</code> | Tiếng Anh – bố cục DonutSMP |
-| <code>en_US_DonutSMP_v2</code> | Tiếng Anh – bố cục DonutSMP v2 |
 | <code>tr_TR</code> | Tiếng Thổ Nhĩ Kỳ |
 | <code>vi_VN</code> | Tiếng Việt |
 
@@ -46,7 +44,7 @@ Thư mục ngôn ngữ được tải từ <code>plugins/SmartSpawner/language/<
 </ConfigProperty>
 
 <ConfigProperty name="gui_layout" value="default" type="string">
-Thư mục bố cục GUI trong <code>plugins/SmartSpawner/gui_layouts/</code>. Tùy chọn có sẵn: <code>default</code>, <code>DonutSMP</code>, <code>DonutSMP_v2</code>.
+Thư mục bố cục GUI trong <code>plugins/SmartSpawner/gui_layouts/</code>. Bố cục đi kèm là <code>default</code>; tạo thêm thư mục nếu bạn muốn nhiều kiểu giao diện.
 </ConfigProperty>
 
 <ConfigGroup name="spawner_properties">

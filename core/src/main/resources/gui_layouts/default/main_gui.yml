@@ -1,90 +1,136 @@
-# Main GUI Layout Configuration
-# Slot positions: 1-27 (3 rows of 9 slots each)
-# Valid materials: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
+# ──────────────────────────────────────────────────────────────
+#  Main Spawner GUI – every icon, action and text in one file
+# ──────────────────────────────────────────────────────────────
+# Slot numbers are 1-27 (3 rows). Top-left is 1.
 #
-# Optional GUI title. Supports & colours, {entity}, {ᴇɴᴛɪᴛʏ}, {amount} and
-# PlaceholderAPI placeholders such as %player_name%. When omitted, the title
-# from gui.yml is used.
-# title: "&8{entity} Spawner"
+# A slot can use:
+#   material / item / custom_texture   the icon
+#   name / lore                        the text shown on the icon
+#   item_model / custom_model_data     resource-pack components
+#   amount / hide_tooltip              stack size and tooltip behaviour
+#   enabled                            show or hide the button
+#   info_button                        marks the spawner info head (timer target)
+#   condition / if                     show a different look/action per server state
+#                                      (sell_integration, no_sell_integration, is_owner)
+#   click / left_click / right_click   action and sounds
+#   cooldown                           per-player cooldown, e.g. "3s"
 #
-# Format:
-#   slot_X:                    # X = slot number (1-27)
-#     material: MATERIAL_NAME  # Material to display (use PLAYER_HEAD for spawner mob head)
-#     item: 'MATERIAL[component=value]'
-#                              # Optional full item instead of material. Accepts a material,
-#                              # the vanilla /give component syntax, or nbt:<base64>.
-#                              # Example: 'paper[item_model="mypack:icon"]'
-#     custom_texture: "..."    # Optional: Custom texture hash for PLAYER_HEAD (similar to spawner_mobs.yml)
-#     name: "&aCustom name"    # Optional: overrides the language name ({placeholders} and %papi% work)
-#     lore:                    # Optional: replaces the language lore
-#       - "&7Line one"
-#       - "%player_name%"
-#     item_model: mypack:icon  # Optional: item_model component
-#     custom_model_data: 101   # Optional: custom_model_data component
-#     amount: 1                # Optional: stack amount shown (1-99)
-#     hide_tooltip: false      # Optional: hide the hover tooltip entirely
-#     enabled: true/false      # Show/hide button
-#     info_button: true/false  # Optional: Mark as spawner info button for timer updates
-#     condition: "condition"   # Optional: show only if condition met
-#     click:                   # Also supports left_click, right_click, and shift variants
-#       action: "action"
-#       sound: ui.button.click
-#       sound_success: entity.experience_orb.pickup
-#       sound_fail: block.note_block.pling
-#     cooldown: "5s"           # Optional: Per-player cooldown; omitted by default
+# Text placeholders: {entity}, {ᴇɴᴛɪᴛʏ}, {amount}, {stack_size}, {range},
+# {delay}, {min_mobs}, {max_mobs}, {current_items}, {max_items},
+# {percent_storage_rounded}, {percent_storage_decimal}, {current_exp},
+# {max_exp}, {percent_exp_rounded}, {percent_exp_decimal}, {total_sell_price},
+# {time}, {loot_items} and PlaceholderAPI %placeholders%.
 #
-# Conditions:
-#   sell_integration: Show only when sell/shop integration is enabled
-#   no_sell_integration: Show only when sell/shop integration is disabled
+# Extra keys understood by specific buttons:
+#   storage button : loot_items, loot_items_empty
+#   info button    : status_full, status_inactive, status_no_loot
 #
-# Actions:
-#   open_storage: Open storage GUI
-#   sell_and_exp: Sell all items and collect exp
-#   collect_exp: Collect exp only
-#   none: Display only, no action
+# Actions: open_storage, sell_and_exp, collect_exp, manage_members, none.
 
-# Skip main GUI and open storage directly when clicking spawner
-# When enabled: Right-clicking a spawner opens the storage GUI directly
-# When disabled: Right-clicking a spawner opens the main GUI first (default behavior)
+title: "&8{entity} &7» &fSpawner"
+
+# Open storage directly when a spawner is clicked.
 skip_main_gui: false
 
-# Sound played when opening the main GUI (volume and pitch default to 1.0)
-# Uses Minecraft namespaced key format (e.g., "block.ender_chest.open")
-# Set to "none" or leave empty to disable
-open_sound: "block.ender_chest.open"
+# Sound played when this GUI opens. Use "none" to disable.
+open_sound: "none"
 
 
-# Storage button
+# ── Members (owner only) ──────────────────────────────────────
+slot_11:
+  material: NAME_TAG
+  name: "&e&lMEMBERS"
+  lore:
+    - "&8&m                              "
+    - "&7Let other players open this spawner."
+    - "&8&m                              "
+    - "&eClick to manage members"
+  condition: is_owner
+  enabled: true
+  click:
+    action: "manage_members"
+    sound: ui.button.click
+
+
+# ── Storage ───────────────────────────────────────────────────
 slot_12:
   material: CHEST
+  name: "&a&lSTORAGE"
+  lore:
+    - "&8&m                              "
+    - "&7Items: &f{current_items}&7/&f{max_slots}"
+    - "&7Worth: &6${total_sell_price}"
+    - "&8&m                              "
+    - "&eClick to open"
+  loot_items: "  &8• &f{item_name}&f: &e{amount}"
+  loot_items_empty: "  &8• &fNo items stored"
   enabled: true
   click:
     action: "open_storage"
     sound: block.chest.open
 
-# Spawner info button (conditional actions based on sell integration)
+
+# ── Spawner info / sell ───────────────────────────────────────
 slot_14:
   material: PLAYER_HEAD
+  name: "&6&l{entity} &7» &fSpawner"
+  lore:
+    - "&8&m                              "
+    - "&7Stack: &f{stack_size}"
+    - "&7Range: &f{range} &7blocks"
+    - "&7Delay: &f{delay}s"
+    - ""
+    - "&6★ &7Next spawn: &f{time}"
+    - "&7Storage: &f{percent_storage_rounded}% &8(&f{current_items}&7/&f{max_items}&8)"
+    - "&7Experience: &f{percent_exp_rounded}%"
+    - "&7Worth: &6${total_sell_price}"
+    - "&8&m                              "
+    - "&eLeft-click to sell & collect exp"
+  status_full: "&cFull capacity"
+  status_inactive: "&cInactive"
+  status_no_loot: "&cNo loot configured"
   enabled: true
   info_button: true
-  # With sell integration: left click = sell+exp
-  # Without sell integration: display only
   if:
     sell_integration:
-      left_click:
+      name: "&6&lSELL &7- &f{entity}"
+      lore:
+        - "&8&m                              "
+        - "&6★ &7Next spawn: &f{time}"
+        - "&7Items: &f{current_items}&7/&f{max_items}"
+        - "&7Experience: &f{percent_exp_rounded}%"
+        - "&7Worth: &6${total_sell_price}"
+        - "&8&m                              "
+        - "&eLeft-click to sell & collect exp"
+      click:
         action: "sell_and_exp"
         sound: ui.button.click
-        sound_success:
-          - block.note_block.bell
-          - entity.experience_orb.pickup
+        sound_success: block.note_block.bell
         sound_fail: block.note_block.pling
     no_sell_integration:
+      name: "&6&l{entity} &7» &fSpawner"
+      lore:
+        - "&8&m                              "
+        - "&7Stack: &f{stack_size}"
+        - "&6★ &7Next spawn: &f{time}"
+        - "&7Storage: &f{percent_storage_rounded}% &8(&f{current_items}&7/&f{max_items}&8)"
+        - "&7Experience: &f{percent_exp_rounded}%"
+        - "&8&m                              "
+        - "&7Sell integration is not installed"
       click:
         action: "none"
 
-# Experience bottle
+
+# ── Experience ────────────────────────────────────────────────
 slot_16:
   material: EXPERIENCE_BOTTLE
+  name: "&b&lEXPERIENCE"
+  lore:
+    - "&8&m                              "
+    - "&7Stored: &f{current_exp}&7/&f{max_exp}"
+    - "&7Progress: &f{percent_exp_rounded}%"
+    - "&8&m                              "
+    - "&eClick to collect"
   enabled: true
   click:
     action: "collect_exp"

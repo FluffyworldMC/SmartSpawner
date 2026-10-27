@@ -2,6 +2,7 @@ package github.nighter.smartspawner.spawner.gui.storage.filter;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.spawner.gui.layout.GuiText;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.lootgen.loot.LootItem;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -22,14 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FilterConfigUI implements Listener {
     private static final int INVENTORY_SIZE = 27;
-    private static final Set<Integer> DIVIDER_SLOTS = Set.of(4, 13, 22);
 
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final SpawnerStorageUI storageUI;
 
     // Precomputed buttons for better performance
-    private final Map<String, ItemStack> staticButtons;
+    private FilterGuiLayout filterLayout = FilterGuiLayout.empty();
+    private ItemStack dividerItem;
 
     // Anti spam click properties
     private final Map<UUID, Long> lastItemClickTime = new ConcurrentHashMap<>();
@@ -38,35 +39,33 @@ public class FilterConfigUI implements Listener {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.storageUI = plugin.getSpawnerStorageUI();
-        this.staticButtons = new HashMap<>();
 
-        initializeStaticButtons();
+        reload();
 
         // Register this class as an event listener
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     public void reload() {
-        // Clear existing static buttons
-        staticButtons.clear();
-        // Reinitialize static buttons
-        initializeStaticButtons();
+        this.filterLayout = plugin.getGuiLayoutConfig().getCurrentFilterLayout();
+        this.dividerItem = createDividerItem();
     }
 
-    private void initializeStaticButtons() {
-        // Create divider button that also functions as return button
-        staticButtons.put("divider", createButton(
-                Material.CYAN_STAINED_GLASS_PANE,
-                languageManager.getGuiItemName("filter_divider.name"),
-                languageManager.getGuiItemLoreAsList("filter_divider.lore")
-        ));
+    private ItemStack createDividerItem() {
+        String name = filterLayout.getDividerName();
+        if (name != null) {
+            name = GuiText.render(null, name, Map.of());
+        }
+        return createButton(filterLayout.getDividerMaterial(), name, filterLayout.getDividerLore());
     }
 
     private ItemStack createButton(Material material, String name, List<String> lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(name);
+            if (name != null) {
+                meta.setDisplayName(name);
+            }
             if (!lore.isEmpty()) {
                 meta.setLore(lore);
             }
@@ -92,8 +91,13 @@ public class FilterConfigUI implements Listener {
      * Opens the filter configuration GUI for a player and spawner
      */
     public void openFilterConfigGUI(Player player, SpawnerData spawner) {
-        // Create a new inventory with title from language manager
-        String title = languageManager.getGuiTitle("gui_title_filter_config");
+        // Create a new inventory with the layout title.
+        String title = filterLayout.getTitle();
+        if (title == null) {
+            title = "";
+        } else {
+            title = GuiText.render(player, title, Map.of());
+        }
         Inventory filterInventory = Bukkit.createInventory(
                 new FilterConfigHolder(spawner),
                 INVENTORY_SIZE,
@@ -124,9 +128,8 @@ public class FilterConfigUI implements Listener {
         Set<Material> filteredItems = spawner.getFilteredItems();
 
         // Set divider elements (which also act as return buttons)
-        ItemStack divider = staticButtons.get("divider");
-        for (Integer slot : DIVIDER_SLOTS) {
-            inventory.setItem(slot, divider);
+        for (Integer slot : filterLayout.getDividerSlots()) {
+            inventory.setItem(slot, dividerItem);
         }
 
         // Separate items into allowed and filtered lists
@@ -167,12 +170,18 @@ public class FilterConfigUI implements Listener {
             Map<String, String> placeholders = new HashMap<>();
             placeholders.put("item_name", itemName);
 
-            String nameKey = isFiltered ? "filter_item_blocked.name" : "filter_item_allowed.name";
-            meta.setDisplayName(languageManager.getGuiItemName(nameKey, placeholders));
+            String nameTemplate = isFiltered
+                    ? filterLayout.getBlockedName() : filterLayout.getAllowedName();
+            if (nameTemplate != null) {
+                meta.setDisplayName(GuiText.render(null, nameTemplate, placeholders));
+            }
 
             // Set the lore with correct status information
-            String loreKey = isFiltered ? "filter_item_blocked.lore" : "filter_item_allowed.lore";
-            meta.setLore(languageManager.getGuiItemLoreAsList(loreKey, placeholders));
+            List<String> loreTemplate = isFiltered
+                    ? filterLayout.getBlockedLore() : filterLayout.getAllowedLore();
+            if (!loreTemplate.isEmpty()) {
+                meta.setLore(GuiText.renderLines(null, loreTemplate, placeholders));
+            }
 
             item.setItemMeta(meta);
         }
@@ -191,7 +200,7 @@ public class FilterConfigUI implements Listener {
             int slot = row * 9 + column;
 
             // Only place if within inventory bounds and not in divider column
-            if (slot < INVENTORY_SIZE && !DIVIDER_SLOTS.contains(slot)) {
+            if (slot < INVENTORY_SIZE && !filterLayout.getDividerSlots().contains(slot)) {
                 inventory.setItem(slot, item);
             }
             index++;
@@ -229,7 +238,7 @@ public class FilterConfigUI implements Listener {
         int slot = event.getRawSlot();
 
         // Handle divider clicks (return to storage)
-        if (DIVIDER_SLOTS.contains(slot)) {
+        if (filterLayout.getDividerSlots().contains(slot)) {
             returnToStorage(player, spawner);
             return;
         }

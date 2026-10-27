@@ -1,22 +1,101 @@
 # GUI Layout
 
-SmartSpawner allows full customization of its spawner GUIs through layout files located in `plugins/SmartSpawner/gui_layouts/`.
+SmartSpawner allows full customization of its spawner GUIs through the files in
+`plugins/SmartSpawner/gui_layouts/`.
 
 ## Directory Structure
 
 ```
 plugins/SmartSpawner/gui_layouts/
-├── default/
-│   ├── main_gui.yml
-│   ├── storage_gui.yml
-│   └── sell_confirm_gui.yml
-├── DonutSMP/
-│   └── ...
-└── DonutSMP_v2/
-    └── ...
+└── default/
+    ├── main_gui.yml
+    ├── storage_gui.yml
+    ├── sell_confirm_gui.yml
+    ├── filter_gui.yml
+    └── members_gui.yml
 ```
 
-Select the active layout with `gui_layout` in `config.yml`, or switch it live using `/ss gui_layout <name>`.
+`default` is the only bundled layout. You can still create other folders and select one with
+`gui_layout` in `config.yml` or `/ss gui_layout <name>`, but everything the plugin ships lives in
+`default`.
+
+## Spawner ownership
+
+A placed spawner belongs to the player who placed it. Only that player, the members they add, and
+players with `smartspawner.owner.bypass` can right-click it open.
+
+The owner gets a **MEMBERS** button in the main menu. It opens `members_gui.yml`, where:
+
+- right-clicking a member head removes that member,
+- **ADD MEMBER** closes the menu and asks for a player name in chat (`cancel` stops),
+- **BACK** returns to the spawner menu.
+
+`members_gui.yml` sets the title, the button slots and the text on each member head:
+`{player}` and `{uuid}` are available. Spawners created before this version have no recorded owner
+and stay open to everyone.
+
+## Every GUI string is in the slot
+
+There is no separate GUI language file. Each button owns its icon, name, lore, action and extras in
+the same slot block:
+
+```yaml
+slot_12:
+  material: CHEST
+  name: "&a&lSTORAGE"
+  lore:
+    - "&7Items: &f{current_items}&7/&f{max_slots}"
+    - "&7Worth: &6${total_sell_price}"
+    - "&eClick to open"
+  loot_items: "  &8• &f{item_name}&f: &e{amount}"
+  loot_items_empty: "  &8• &fNo items stored"
+  click:
+    action: "open_storage"
+    sound: block.chest.open
+```
+
+Titles are top-level keys (`title`, and `title_single` on the storage GUI). Everything accepts `&`
+colour codes, `&#RRGGBB`, the placeholders documented at the top of each file, and PlaceholderAPI
+tokens such as `%player_name%`.
+
+Extra keys used by specific buttons:
+
+| Key | Used by | Meaning |
+|---|---|---|
+| `loot_items` | storage / info / sell-summary buttons | one line per stored item, for `{loot_items}` |
+| `loot_items_empty` | same | line shown when there is nothing to list |
+| `status_full` | info button | text used for `{time}` when storage is full |
+| `status_inactive` | info button | text used for `{time}` when the spawner is inactive |
+| `status_no_loot` | info button | text used for `{time}` when no loot is configured |
+| `sort_selected` / `sort_unselected` / `sort_empty` | sort button | the `{available_items}` list |
+| `name_with_exp` / `lore_with_exp` | sell confirm button | used when the sale also collects EXP |
+
+## Filter GUI
+
+`filter_gui.yml` controls the drop-filter screen. It has no `slot_` buttons because the items are
+generated from the spawner's loot table:
+
+```yaml
+title: '    ᴀʟʟᴏᴡᴇᴅ           ʙʟᴏᴄᴋᴇᴅ'
+divider_slots: [5, 14, 23]
+divider:
+  material: CYAN_STAINED_GLASS_PANE
+  name: '&fᴅʀᴏᴘ ꜰɪʟᴛᴇʀ'
+  lore:
+    - '&7Left side: allowed items'
+    - '&7Right side: blocked items'
+allowed_item:
+  name: '&f{item_name}&a allowed'
+  lore:
+    - '&a▸ Click to block this item!'
+blocked_item:
+  name: '&f{item_name}&c blocked'
+  lore:
+    - '&c▸ Click to allow this item!'
+```
+
+`divider_slots` uses the normal 1–27 slot numbering and also defines the columns the generated items
+skip. Clicking a divider returns to the storage GUI.
 
 ## How Your Edits Are Kept
 

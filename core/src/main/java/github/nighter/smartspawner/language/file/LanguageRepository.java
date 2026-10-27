@@ -97,7 +97,6 @@ public final class LanguageRepository {
                 new YamlConfiguration(),
                 new YamlConfiguration(),
                 new YamlConfiguration(),
-                new YamlConfiguration(),
                 new YamlConfiguration()
         );
     }

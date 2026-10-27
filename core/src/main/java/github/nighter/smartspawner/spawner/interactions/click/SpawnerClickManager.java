@@ -161,6 +161,12 @@ public class SpawnerClickManager implements Listener {
             return;
         }
 
+        // Only the owner and their members may use the spawner.
+        if (!spawner.canUse(player)) {
+            messageService.sendMessage(player, "spawner_not_owner");
+            return;
+        }
+
         // Handle spawn egg usage
         if (isSpawnEgg(itemType)) {
             spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(false), spawner, heldItem);

@@ -295,6 +295,7 @@ public class SpawnerPlaceListener implements Listener {
         }
 
         SpawnerData spawner = new SpawnerData(spawnerId, block.getLocation(), entityType, configName, plugin);
+        spawner.setOwnerUUID(player.getUniqueId());
         spawner.setSpawnerActive(true);
         spawner.setStackSize(stackSize);
 
@@ -326,6 +327,7 @@ public class SpawnerPlaceListener implements Listener {
         }
 
         SpawnerData spawner = new SpawnerData(spawnerId, block.getLocation(), itemMaterial, configName, plugin);
+        spawner.setOwnerUUID(player.getUniqueId());
         spawner.setSpawnerActive(true);
         spawner.setStackSize(stackSize);
 

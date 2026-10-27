@@ -15,6 +15,7 @@ import github.nighter.smartspawner.spawner.config.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.language.format.LanguageComponentFormatter;
 import github.nighter.smartspawner.api.events.SpawnerOpenGUIEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -31,11 +32,6 @@ import java.util.function.Consumer;
 public class SpawnerMenuUI {
     private static final int INVENTORY_SIZE = 27;
     private static final int TICKS_PER_SECOND = 20;
-    private static final Map<String, String> EMPTY_PLACEHOLDERS = Collections.emptyMap();
-
-    // Cache frequently used formatting strings and pattern lookups
-    private static final String LOOT_ITEM_FORMAT_KEY = "spawner_storage_item.loot_items";
-    private static final String EMPTY_LOOT_MESSAGE_KEY = "spawner_storage_item.loot_items_empty";
 
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
@@ -128,7 +124,7 @@ public class SpawnerMenuUI {
             }
 
             // Check condition if present
-            if (button.hasCondition() && !evaluateButtonCondition(button, player)) {
+            if (button.hasCondition() && !evaluateButtonCondition(button, player, spawner)) {
                 continue;
             }
 
@@ -200,13 +196,16 @@ public class SpawnerMenuUI {
         placeholders.put("amount", String.valueOf(spawner.getStackSize()));
 
         String title;
-        String customTitle = plugin.getGuiLayoutConfig().getMainTitle();
+        String customTitle = spawner.getStackSize() > 1
+                ? plugin.getGuiLayoutConfig().getMainTitle()
+                : (plugin.getGuiLayoutConfig().getMainTitleSingle() != null
+                        ? plugin.getGuiLayoutConfig().getMainTitleSingle()
+                        : plugin.getGuiLayoutConfig().getMainTitle());
+
         if (customTitle != null) {
             title = GuiText.render(player, customTitle, placeholders);
-        } else if (spawner.getStackSize() > 1) {
-            title = languageManager.getGuiTitle("gui_title_main.stacked_spawner", placeholders);
         } else {
-            title = languageManager.getGuiTitle("gui_title_main.single_spawner", placeholders);
+            title = entityName + " Spawner";
         }
 
         return Bukkit.createInventory(new SpawnerMenuHolder(spawner, layout), INVENTORY_SIZE, title);
@@ -229,20 +228,16 @@ public class SpawnerMenuUI {
             return cachedItem.clone();
         }
 
-        // Smart placeholder detection: First, get the raw name and lore templates
-        String nameTemplate = languageManager.getGuiItemName("spawner_storage_item.name", EMPTY_PLACEHOLDERS);
-        List<String> loreTemplate = languageManager.getGuiItemLoreAsList("spawner_storage_item.lore", EMPTY_PLACEHOLDERS);
-        
-        // Define all available placeholders
         Set<String> availablePlaceholders = Set.of(
             "max_slots", "current_items", "percent_storage_rounded", "total_sell_price", "loot_items"
         );
 
-        // Detect which placeholders are actually used
-        Set<String> usedPlaceholders = new HashSet<>();
-        usedPlaceholders.addAll(detectUsedPlaceholders(nameTemplate, availablePlaceholders));
-        usedPlaceholders.addAll(detectUsedPlaceholders(loreTemplate, availablePlaceholders));
-        usedPlaceholders.addAll(detectUsedPlaceholders(button, availablePlaceholders));
+        // Detect which placeholders the button's own text uses.
+        Set<String> usedPlaceholders = detectUsedPlaceholders(button, availablePlaceholders);
+        String lootFormat = button != null ? button.getText("loot_items") : null;
+        if (lootFormat != null) {
+            usedPlaceholders.add("loot_items");
+        }
 
         // Build only the placeholders that are actually used
         Map<String, String> placeholders = new HashMap<>();
@@ -261,19 +256,14 @@ public class SpawnerMenuUI {
             refreshSellValue(spawner, player);
             placeholders.put("total_sell_price", languageManager.formatNumber(spawner.getAccumulatedSellValue()));
         }
-        final List<Component> finalLootComponents = usedPlaceholders.contains("loot_items") 
-                ? buildLootItemComponents(spawner, virtualInventory.getConsolidatedItems())
+        final List<Component> finalLootComponents = usedPlaceholders.contains("loot_items")
+                ? buildLootItemComponents(spawner, virtualInventory.getConsolidatedItems(), lootFormat)
                 : Collections.emptyList();
 
-        Consumer<ItemMeta> metaModifier = meta -> {
-            meta.setDisplayName(languageManager.getGuiItemName("spawner_storage_item.name", placeholders));
-            List<Component> lore = languageManager.buildGuiLoreAsComponents(
-                    "spawner_storage_item.lore", placeholders, finalLootComponents, EMPTY_LOOT_MESSAGE_KEY);
-            if (!lore.isEmpty()) {
-                meta.lore(lore);
-            }
-            GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
-        };
+        Consumer<ItemMeta> metaModifier = meta ->
+                GuiButtonRenderer.applyOverrides(meta, button, player, placeholders,
+                        finalLootComponents,
+                        button != null ? button.getText("loot_items_empty") : null);
 
         ItemStack chestItem;
         if (button != null && button.getMaterial() == Material.PLAYER_HEAD && button.getCustomTexture() != null && !button.getCustomTexture().trim().isEmpty()) {
@@ -326,11 +316,7 @@ public class SpawnerMenuUI {
             return result;
         }
 
-        // Smart placeholder detection: First, get the raw name and lore templates
-        String nameTemplate = languageManager.getGuiItemName("spawner_info_item.name", EMPTY_PLACEHOLDERS);
-        String loreKey = hasShopPermission ? "spawner_info_item.lore" : "spawner_info_item.lore_no_shop";
-        List<String> loreTemplate = languageManager.getGuiItemLoreAsList(loreKey, EMPTY_PLACEHOLDERS);
-
+        // Smart placeholder detection: which placeholders the button's text actually uses
         // Define all available placeholders
         Set<String> availablePlaceholders = Set.of(
             "entity", "ᴇɴᴛɪᴛʏ", "stack_size", "range", "delay", "min_mobs", "max_mobs",
@@ -340,10 +326,7 @@ public class SpawnerMenuUI {
         );
 
         // Detect which placeholders are actually used
-        Set<String> usedPlaceholders = new HashSet<>();
-        usedPlaceholders.addAll(detectUsedPlaceholders(nameTemplate, availablePlaceholders));
-        usedPlaceholders.addAll(detectUsedPlaceholders(loreTemplate, availablePlaceholders));
-        usedPlaceholders.addAll(detectUsedPlaceholders(button, availablePlaceholders));
+        Set<String> usedPlaceholders = detectUsedPlaceholders(button, availablePlaceholders);
 
         // Prepare only the placeholders that are actually used
         Map<String, String> placeholders = new HashMap<>();
@@ -436,17 +419,10 @@ public class SpawnerMenuUI {
         // cache (and pollute the placeholder cache). It is resolved via applyTimerPlaceholder() on
         // every return instead, so the item always shows the current countdown.
 
-        // Prepare the meta modifier consumer
-        Consumer<ItemMeta> metaModifier = meta -> {
-            // Set display name with the specified placeholders
-            meta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));
-
-            // Get and set lore with placeholders
-            List<String> lore = languageManager.getGuiItemLoreWithMultilinePlaceholders(loreKey, placeholders);
-            meta.setLore(lore);
-
-            GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
-        };
+        // Prepare the meta modifier consumer. The button owns the name and lore, so there is no
+        // language default to write first; {time} stays unresolved for applyTimerPlaceholder().
+        Consumer<ItemMeta> metaModifier = meta ->
+                GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
 
         ItemStack spawnerItem;
 
@@ -561,12 +537,8 @@ public class SpawnerMenuUI {
         placeholders.put("percent_exp_rounded", String.valueOf(percentExp));
         placeholders.put("u_max_exp", String.valueOf(maxExp));
 
-        Consumer<ItemMeta> metaModifier = meta -> {
-            meta.setDisplayName(languageManager.getGuiItemName("exp_info_item.name", placeholders));
-            List<String> loreExp = languageManager.getGuiItemLoreAsList("exp_info_item.lore", placeholders);
-            meta.setLore(loreExp);
-            GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
-        };
+        Consumer<ItemMeta> metaModifier = meta ->
+                GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
 
         ItemStack expItem;
         if (button != null && button.getMaterial() == Material.PLAYER_HEAD && button.getCustomTexture() != null && !button.getCustomTexture().trim().isEmpty()) {
@@ -628,7 +600,8 @@ public class SpawnerMenuUI {
         return maximum > 0 ? (int) ((double) current / maximum * 100) : 0;
     }
 
-    private List<Component> buildLootItemComponents(SpawnerData spawner, Map<ItemSignature, Long> storedItems) {
+    private List<Component> buildLootItemComponents(SpawnerData spawner, Map<ItemSignature, Long> storedItems,
+                                                    String lootFormat) {
         Map<Material, Long> materialAmountMap = new HashMap<>();
         for (Map.Entry<ItemSignature, Long> entry : storedItems.entrySet()) {
             Material material = entry.getKey().getMaterial();
@@ -650,8 +623,7 @@ public class SpawnerMenuUI {
                 long amount = materialAmountMap.getOrDefault(material, 0L);
                 String formattedAmount = languageManager.formatNumber(amount);
                 String chance = String.format("%.1f", lootItem.chance()) + "%";
-                components.add(languageManager.buildTranslatableGuiLootLine(
-                        LOOT_ITEM_FORMAT_KEY, lootItem.template(), formattedAmount, chance));
+                components.add(lootLine(lootFormat, lootItem.template(), formattedAmount, chance));
             }
         } else {
             List<Map.Entry<ItemSignature, Long>> sortedItems =
@@ -660,11 +632,15 @@ public class SpawnerMenuUI {
             for (Map.Entry<ItemSignature, Long> entry : sortedItems) {
                 long amount = entry.getValue();
                 String formattedAmount = languageManager.formatNumber(amount);
-                components.add(languageManager.buildTranslatableGuiLootLine(
-                        LOOT_ITEM_FORMAT_KEY, entry.getKey().getTemplate(), formattedAmount, ""));
+                components.add(lootLine(lootFormat, entry.getKey().getTemplate(), formattedAmount, ""));
             }
         }
         return components;
+    }
+
+    private Component lootLine(String template, ItemStack item, String amount, String chance) {
+        return LanguageComponentFormatter.translatableLootLine(
+                template, languageManager.getItemDisplayName(item), amount, chance);
     }
 
     /**
@@ -745,7 +721,8 @@ public class SpawnerMenuUI {
      * Evaluate button condition based on player/server state
      * OPTIMIZATION: Centralized condition evaluation
      */
-    private boolean evaluateButtonCondition(GuiButton button, org.bukkit.entity.Player player) {
+    private boolean evaluateButtonCondition(GuiButton button, org.bukkit.entity.Player player,
+                                            SpawnerData spawner) {
         String condition = button.getCondition();
         if (condition == null || condition.isEmpty()) {
             return true;
@@ -756,6 +733,9 @@ public class SpawnerMenuUI {
                 return plugin.hasSellIntegration();
             case "no_sell_integration":
                 return !plugin.hasSellIntegration();
+            case "is_owner":
+                return spawner.isOwner(player.getUniqueId())
+                        || player.hasPermission("smartspawner.owner.bypass");
             default:
                 plugin.getLogger().warning("Unknown button condition: " + condition);
                 return true;

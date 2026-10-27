@@ -57,7 +57,8 @@ public class SpawnerDatabaseHandler implements SpawnerStorage {
             entity_type, itemspawner_type, config_name, stack_size, max_stack_size,
             active, stop, activation_range, delay, last_spawn_time, min_mobs, max_mobs,
             max_loot_slots, is_at_capacity, exp, max_stored_exp,
-            last_interacted_player, preferred_sort_item, filtered_items, storage_items, custom_delay
+            last_interacted_player, preferred_sort_item, filtered_items, storage_items,
+            custom_delay, owner_uuid, members
             """;
 
     // MySQL/MariaDB upsert syntax
@@ -67,8 +68,9 @@ public class SpawnerDatabaseHandler implements SpawnerStorage {
                 entity_type, itemspawner_type, stack_size, max_stack_size,
                 active, stop, activation_range, delay, last_spawn_time, min_mobs, max_mobs,
                 max_loot_slots, is_at_capacity, total_items, exp, max_stored_exp,
-                last_interacted_player, preferred_sort_item, filtered_items, storage_items, config_name, custom_delay
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                last_interacted_player, preferred_sort_item, filtered_items, storage_items, config_name, custom_delay,
+                owner_uuid, members
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 world = VALUES(world),
                 loc_x = VALUES(loc_x),
@@ -97,7 +99,9 @@ public class SpawnerDatabaseHandler implements SpawnerStorage {
                 filtered_items = VALUES(filtered_items),
                 storage_items = VALUES(storage_items),
                 config_name = VALUES(config_name),
-                custom_delay = VALUES(custom_delay)
+                custom_delay = VALUES(custom_delay),
+                owner_uuid = VALUES(owner_uuid),
+                members = VALUES(members)
             """;
 
     // SQLite upsert syntax (ON CONFLICT)
@@ -107,8 +111,9 @@ public class SpawnerDatabaseHandler implements SpawnerStorage {
                 entity_type, itemspawner_type, stack_size, max_stack_size,
                 active, stop, activation_range, delay, last_spawn_time, min_mobs, max_mobs,
                 max_loot_slots, is_at_capacity, total_items, exp, max_stored_exp,
-                last_interacted_player, preferred_sort_item, filtered_items, storage_items, config_name, custom_delay
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                last_interacted_player, preferred_sort_item, filtered_items, storage_items, config_name, custom_delay,
+                owner_uuid, members
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(spawner_id) DO UPDATE SET
                 world = excluded.world,
                 loc_x = excluded.loc_x,
@@ -137,7 +142,9 @@ public class SpawnerDatabaseHandler implements SpawnerStorage {
                 filtered_items = excluded.filtered_items,
                 storage_items = excluded.storage_items,
                 config_name = excluded.config_name,
-                custom_delay = excluded.custom_delay
+                custom_delay = excluded.custom_delay,
+                owner_uuid = excluded.owner_uuid,
+                members = excluded.members
             """;
 
     /** Columns the cross-server list GUI needs. Deliberately excludes the item blob. */
@@ -454,6 +461,8 @@ public class SpawnerDatabaseHandler implements SpawnerStorage {
         stmt.setBytes(27, items);
         stmt.setString(28, spawner.getConfigName());
         stmt.setBoolean(29, spawner.isCustomSpawnDelay());
+        stmt.setString(30, spawner.getOwnerUUID() != null ? spawner.getOwnerUUID().toString() : null);
+        stmt.setString(31, spawner.serializeMembers());
         return true;
     }
 
@@ -604,6 +613,17 @@ public class SpawnerDatabaseHandler implements SpawnerStorage {
 
         // Load player interaction data
         spawner.setLastInteractedPlayer(rs.getString("last_interacted_player"));
+
+        // Load ownership
+        String owner = rs.getString("owner_uuid");
+        if (owner != null && !owner.isBlank()) {
+            try {
+                spawner.setOwnerUUID(UUID.fromString(owner));
+            } catch (IllegalArgumentException e) {
+                logger.warning("Invalid owner UUID for spawner " + spawnerId + ": " + owner);
+            }
+        }
+        spawner.loadMembers(rs.getString("members"));
 
         // Load preferred sort item
         String preferredSortItemStr = rs.getString("preferred_sort_item");

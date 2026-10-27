@@ -1,10 +1,14 @@
 package github.nighter.smartspawner.spawner.gui.layout;
 
+import github.nighter.smartspawner.language.format.LanguageComponentFormatter;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import net.kyori.adventure.text.Component;
+
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -35,30 +39,70 @@ public final class GuiButtonRenderer {
     /**
      * Overrides the display name, lore and item components on an already-built icon.
      *
-     * <p>Call this after the UI has written the language-default name and lore into the meta. Only
-     * the parts the server owner actually configured are replaced.</p>
+     * <p>The button owns its text; this applies only the parts it declares and leaves the icon's
+     * own template values alone otherwise.</p>
      */
     public static void applyOverrides(ItemMeta meta, GuiButton button, Player player,
                                       Map<String, String> placeholders) {
+        applyOverrides(meta, button, player, placeholders, null, null);
+    }
+
+    /**
+     * Applies display overrides and expands {@code {loot_items}} in a button's custom lore to the
+     * supplied components. Used by the buttons that show a loot summary.
+     */
+    public static void applyOverrides(ItemMeta meta, GuiButton button, Player player,
+                                      Map<String, String> placeholders,
+                                      List<Component> lootComponents, String emptyLootLine) {
+        apply(meta, button, player, placeholders, lootComponents, emptyLootLine, false);
+    }
+
+    /**
+     * Applies the {@code name_with_exp} / {@code lore_with_exp} variant when the button is the
+     * sell-confirmation button and the click also collects experience.
+     */
+    public static void applyOverridesWithExp(ItemMeta meta, GuiButton button, Player player,
+                                             Map<String, String> placeholders,
+                                             List<Component> lootComponents, String emptyLootLine) {
+        apply(meta, button, player, placeholders, lootComponents, emptyLootLine, true);
+    }
+
+    private static void apply(ItemMeta meta, GuiButton button, Player player,
+                              Map<String, String> placeholders,
+                              List<Component> lootComponents, String emptyLootLine,
+                              boolean withExp) {
         if (meta == null || button == null) {
             return;
         }
 
         ItemMeta templateMeta = button.getTemplate() != null
                 ? button.getTemplate().getItemMeta() : null;
+        String displayName = withExp && button.getDisplayNameWithExp() != null
+                ? button.getDisplayNameWithExp() : button.getDisplayName();
+        List<String> displayLore = withExp && button.getDisplayLoreWithExp() != null
+                ? button.getDisplayLoreWithExp() : button.getDisplayLore();
 
-        if (button.getDisplayName() != null) {
-            String name = GuiText.render(player, button.getDisplayName(), placeholders);
+        if (displayName != null) {
+            String name = GuiText.render(player, displayName, placeholders);
             if (name != null) {
                 meta.setDisplayName(name);
             }
         } else if (templateMeta != null && templateMeta.hasDisplayName()) {
-            // A name baked into the item: template wins over the language default.
+            // A name baked into the item: template wins over the fallback name.
             meta.setDisplayName(templateMeta.getDisplayName());
         }
 
-        if (button.getDisplayLore() != null) {
-            meta.setLore(GuiText.renderLines(player, button.getDisplayLore(), placeholders));
+        if (displayLore != null) {
+            if (lootComponents != null && containsLootPlaceholder(displayLore)) {
+                meta.lore(LanguageComponentFormatter.loreComponents(
+                        displayLore,
+                        line -> GuiText.render(player, line, placeholders),
+                        () -> emptyLootLine == null ? ""
+                                : GuiText.render(player, emptyLootLine, placeholders),
+                        lootComponents));
+            } else {
+                meta.setLore(GuiText.renderLines(player, displayLore, placeholders));
+            }
         } else if (templateMeta != null && templateMeta.hasLore()) {
             meta.setLore(templateMeta.getLore());
         }
@@ -120,6 +164,15 @@ public final class GuiButtonRenderer {
 
     private static boolean hasPapi(String text) {
         return text != null && PAPI_TOKEN.matcher(text).find();
+    }
+
+    private static boolean containsLootPlaceholder(List<String> lore) {
+        for (String line : lore) {
+            if (line != null && line.contains("{loot_items}")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static NamespacedKey parseKey(String raw) {

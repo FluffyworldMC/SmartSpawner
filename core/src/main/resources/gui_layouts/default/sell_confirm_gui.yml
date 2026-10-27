@@ -1,65 +1,62 @@
-# Sell Confirmation GUI Layout Configuration
-# Slot positions: 1-27 (3 rows of 9 slots each)
-# Valid materials: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
+# ──────────────────────────────────────────────────────────────
+#  Sell Confirmation GUI – icons, text and actions
+# ──────────────────────────────────────────────────────────────
+# Slot numbers are 1-27 (3 rows).
 #
-# Optional GUI title. Supports & colours, {entity}, {ᴇɴᴛɪᴛʏ},
-# {total_sell_price} and PlaceholderAPI placeholders.
-# title: "&8Confirm sale of {entity}"
+# Placeholders: {entity}, {ᴇɴᴛɪᴛʏ}, {current_items}, {max_items},
+# {current_exp}, {total_sell_price}, {percent_storage_decimal},
+# {percent_storage_rounded}, {loot_items} and PlaceholderAPI %placeholders%.
 #
-# Format:
-#   slot_X:                    # X = slot number (1-27)
-#     material: MATERIAL_NAME  # Material to display
-#     item: 'MATERIAL[component=value]'
-#                              # Optional full item instead of material (vanilla /give syntax or nbt:)
-#     name: "&aCustom name"    # Optional: overrides the language name
-#     lore:                    # Optional: replaces the language lore
-#       - "&7Price: &6{total_sell_price}"
-#     item_model: mypack:icon  # Optional: item_model component
-#     custom_model_data: 101   # Optional: custom_model_data component
-#     amount: 1                # Optional: stack amount shown (1-99)
-#     hide_tooltip: false      # Optional: hide the hover tooltip entirely
-#     enabled: true/false      # Show/hide button
-#     info_button: true/false  # Optional: Mark as spawner info button (display only)
-#     click:
-#       action: "action"
-#       sound: ui.button.click
-#       sound_success: block.note_block.bell
-#       sound_fail: block.note_block.pling
-#     cooldown: "5s"           # Optional: Per-player cooldown; omitted by default
+# Extra keys:
+#   name_with_exp / lore_with_exp   used on the confirm button when the
+#                                   click also collects stored experience
+#   loot_items / loot_items_empty  format for the {loot_items} lore line
 #
-# Actions:
-#   cancel: Close confirmation and return to previous GUI
-#   confirm: Confirm and sell all items
-#   none: Display only, not clickable (no action when clicked)
-#
-# Multiple buttons can use same slot
-# You can add multiple cancel/confirm buttons by using different slot numbers
+# Actions: cancel, confirm, none.
 
-# Skip sell confirmation GUI when selling items
-# When enabled: Clicking sell will immediately sell all items without confirmation
-# When disabled: Clicking sell will show a confirmation GUI first (default behavior)
+title: "&#545454ᴄᴏɴꜰɪʀᴍ ꜱᴇʟʟ"
+
+# Sell immediately without showing this screen.
 skip_sell_confirmation: false
 
 
-# Cancel button
+# ── Cancel ────────────────────────────────────────────────────
 slot_11:
   material: RED_STAINED_GLASS_PANE
+  name: "&#f50001ᴄᴀɴᴄᴇʟ"
+  lore:
+    - "&fClick to cancel"
   enabled: true
   click:
     action: "cancel"
     sound: ui.button.click
 
-# Spawner info display (not clickable)
+
+# ── Spawner / loot summary ────────────────────────────────────
 slot_14:
   material: PLAYER_HEAD
+  name: "&#02e57dʟᴏᴏᴛ"
+  lore:
+    - "{loot_items}"
+  loot_items: "&#02e57d{amount} &f{item_name}"
+  loot_items_empty: "&#02e57dNo items to sell"
   enabled: true
   info_button: true
   click:
     action: "none"
 
-# Confirm button
+
+# ── Confirm ───────────────────────────────────────────────────
 slot_17:
   material: LIME_STAINED_GLASS_PANE
+  name: "&#01ff00ᴄᴏɴꜰɪʀᴍ"
+  lore:
+    - "&fClick to sell all items"
+    - "&7(${total_sell_price})"
+  name_with_exp: "&#01ff00ᴄᴏɴꜰɪʀᴍ"
+  lore_with_exp:
+    - "&fClick to sell all items and collect xp"
+    - "&7(${total_sell_price} + {current_exp} xp)"
   enabled: true
   click:
     action: "confirm"

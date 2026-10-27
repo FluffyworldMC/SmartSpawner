@@ -1,0 +1,42 @@
+# ──────────────────────────────────────────────────────────────
+#  Member GUI – who else may open this spawner
+# ──────────────────────────────────────────────────────────────
+# Member heads are generated automatically. The two slot buttons below are
+# the only hand-placed icons.
+#
+# Placeholders for member_item: {player}, {uuid}
+# Actions: add_member, return_main
+
+title: "&8Spawner Members"
+
+# Optional 1-27 list. Leave it out to use every slot not taken by a button.
+# member_slots: [1, 2, 3, 4, 5]
+
+member_item:
+  name: "&f{player}"
+  lore:
+    - "&7Click to remove this member"
+    - "&8{uuid}"
+
+# Add a member. Clicking asks for the player name in chat.
+slot_22:
+  material: EMERALD
+  name: "&a&lADD MEMBER"
+  lore:
+    - "&7Click, then type a player name in chat."
+    - "&7Type &ccancel &7to stop."
+  enabled: true
+  click:
+    action: "add_member"
+    sound: ui.button.click
+
+# Back to the spawner menu.
+slot_27:
+  material: BARRIER
+  name: "&c&lBACK"
+  lore:
+    - "&7Return to the spawner menu."
+  enabled: true
+  click:
+    action: "return_main"
+    sound: ui.button.click

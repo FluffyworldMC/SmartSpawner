@@ -1,0 +1,38 @@
+# ──────────────────────────────────────────────────────────────
+#  Drop Filter GUI – title, divider and item text
+# ──────────────────────────────────────────────────────────────
+# The items are generated from the spawner's loot table, so there are no
+# slot_ buttons here. Only the divider and the text on each item are set.
+#
+# divider_slots uses 1-27 slot numbers and also defines the columns that
+# generated items skip. Clicking a divider returns to the storage GUI.
+
+title: "    ᴀʟʟᴏᴡᴇᴅ           ʙʟᴏᴄᴋᴇᴅ"
+
+divider_slots:
+  - 5
+  - 14
+  - 23
+
+divider:
+  material: CYAN_STAINED_GLASS_PANE
+  name: "&fᴅʀᴏᴘ &#5DB5F1ꜰɪʟᴛᴇʀ"
+  lore:
+    - ""
+    - " &#5DB5F1ℹ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ:"
+    - "  &8• &fLeft side: allowed items"
+    - "  &8• &fRight side: blocked items"
+    - ""
+    - "&#5DB5F1 ▸ Click to return to storage!"
+
+# Shown for an item the spawner is currently allowed to store.
+allowed_item:
+  name: "&f{item_name}&#37eb9a allowed"
+  lore:
+    - "&#37eb9a ▸ &fClick to block this item!"
+
+# Shown for an item the spawner is currently blocked from storing.
+blocked_item:
+  name: "&f{item_name}&#FF6B6B blocked"
+  lore:
+    - "&#FF6B6B ▸ &fClick to allow this item!"

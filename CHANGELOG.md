@@ -7,8 +7,12 @@ All notable changes to SmartSpawner are documented in this file.
 ### Fixed
 - Changing `spawner_properties.default.delay` now applies to spawners already placed, after `/ss reload` or a restart. Before, they kept the old delay until broken and placed again.
 
+### Added
+- Spawners now belong to the player who placed them. Only the owner, invited members, and `smartspawner.owner.bypass` can open them. The owner gets a **MEMBERS** button in the main menu to add or remove players by name.
+
 ### Changed
 - A delay set with `/ss set delay` now stays on that spawner through reloads and restarts, instead of following the config.
+- Spawner GUIs now keep their text in the layout file beside each button. `gui.yml` is gone from the language folder, and the bundled DonutSMP layout is now the single `default` layout.
 
 ### Notes
 - Spawners given their own delay with `/ss set delay` before this version go back to the config delay once. Set it again where needed.

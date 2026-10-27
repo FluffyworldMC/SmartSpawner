@@ -143,6 +143,10 @@ public class DatabaseManager {
                 preferred_sort_item VARCHAR(64) DEFAULT NULL,
                 filtered_items TEXT DEFAULT NULL,
 
+                -- Ownership. owner_uuid is NULL for spawners created before ownership existed.
+                owner_uuid VARCHAR(36) DEFAULT NULL,
+                members TEXT DEFAULT NULL,
+
                 -- Virtual inventory, see SpawnerInventoryCodec
                 storage_items MEDIUMBLOB DEFAULT NULL,
 
@@ -203,6 +207,10 @@ public class DatabaseManager {
                 preferred_sort_item VARCHAR(64) DEFAULT NULL,
                 filtered_items TEXT DEFAULT NULL,
 
+                -- Ownership. owner_uuid is NULL for spawners created before ownership existed.
+                owner_uuid VARCHAR(36) DEFAULT NULL,
+                members TEXT DEFAULT NULL,
+
                 -- Virtual inventory, see SpawnerInventoryCodec
                 storage_items BLOB DEFAULT NULL,
 
@@ -221,7 +229,7 @@ public class DatabaseManager {
 
     private static final String SCHEMA_VERSION_KEY = "schema_version";
     private static final int LEGACY_SCHEMA_VERSION = 1;
-    private static final int CURRENT_SCHEMA_VERSION = 5;
+    private static final int CURRENT_SCHEMA_VERSION = 6;
 
     /** Rows converted per transaction while rewriting inventories during the v3 migration. */
     private static final int MIGRATION_BATCH_SIZE = 250;
@@ -561,7 +569,8 @@ public class DatabaseManager {
             entity_type, itemspawner_type, stack_size, max_stack_size,
             active, stop, activation_range, delay, last_spawn_time, min_mobs, max_mobs,
             max_loot_slots, is_at_capacity, total_items, exp, max_stored_exp,
-            last_interacted_player, preferred_sort_item, filtered_items, storage_items
+            last_interacted_player, preferred_sort_item, filtered_items, storage_items,
+            config_name, custom_delay, owner_uuid, members
             """;
 
     /**
@@ -731,6 +740,11 @@ public class DatabaseManager {
             // Existing rows start as not custom, so they pick up the configured delay.
             case 5 -> addColumnIfMissing("custom_delay", storageMode == StorageMode.SQLITE
                     ? "BOOLEAN NOT NULL DEFAULT 0" : "BOOLEAN NOT NULL DEFAULT FALSE");
+            // Existing spawners stay unowned and therefore open to everyone.
+            case 6 -> {
+                addColumnIfMissing("owner_uuid", "VARCHAR(36) DEFAULT NULL");
+                addColumnIfMissing("members", "TEXT DEFAULT NULL");
+            }
             default -> throw new SQLException("No database migration handler found for schema version: " + targetVersion);
         }
     }

@@ -46,8 +46,6 @@ public final class LanguageFiles {
 
         YamlConfiguration messages = activeFileTypes.contains(LanguageFileType.MESSAGES)
                 ? loadFile(locale, LanguageFileType.MESSAGES) : new YamlConfiguration();
-        YamlConfiguration gui = activeFileTypes.contains(LanguageFileType.GUI)
-                ? loadFile(locale, LanguageFileType.GUI) : new YamlConfiguration();
         YamlConfiguration commandGui = activeFileTypes.contains(LanguageFileType.COMMAND_GUI)
                 ? loadFile(locale, LanguageFileType.COMMAND_GUI) : new YamlConfiguration();
         YamlConfiguration formatting = activeFileTypes.contains(LanguageFileType.FORMATTING)
@@ -59,7 +57,7 @@ public final class LanguageFiles {
         YamlConfiguration hologram = activeFileTypes.contains(LanguageFileType.HOLOGRAM)
                 ? loadFile(locale, LanguageFileType.HOLOGRAM) : new YamlConfiguration();
 
-        localeMap.put(locale, new LocaleData(messages, gui, commandGui, formatting, items, commandMessages, hologram));
+        localeMap.put(locale, new LocaleData(messages, commandGui, formatting, items, commandMessages, hologram));
     }
 
     public YamlConfiguration loadOrCreateFile(String locale, LanguageFileType fileType, boolean forceReload) {

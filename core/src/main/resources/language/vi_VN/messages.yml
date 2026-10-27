@@ -139,3 +139,26 @@ sell_and_exp_success:
 sell_and_exp_success_with_mending:
   message: 'Bạn đã bán &e{amount} &fvật phẩm với giá &a${price}&f, nhận &a{exp} &fExp &f(&c{exp_mending} &fđã dùng cho Mending).'
   action_bar: '&a+${price} &f| &a+{exp} Exp &f(&c-{exp_mending} Mending)'
+
+spawner_not_owner:
+  message: '&#FF4444You are not the owner of this spawner.'
+  action_bar: '&#FF4444Not your spawner.'
+  sound: block.note_block.pling
+
+member_add_prompt:
+  message: '&#5DB5F1Type the player name in chat, or &ccancel&f to stop.'
+
+member_added:
+  message: '&#37eb9a{player} &fcan now open this spawner.'
+
+member_removed:
+  message: '&#FF6B6B{player} &fcan no longer open this spawner.'
+
+member_not_found:
+  message: '&#FF4444No player named &f{player} &ffound.'
+
+member_already_added:
+  message: '&#FF4444{player} &fis already a member.'
+
+member_cannot_add_owner:
+  message: '&#FF4444You are already the owner of this spawner.'

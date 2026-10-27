@@ -4,6 +4,7 @@ import github.nighter.smartspawner.spawner.properties.ItemSignature;
 import net.kyori.adventure.text.Component;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.language.format.LanguageComponentFormatter;
 import github.nighter.smartspawner.utils.ItemTooltipUtil;
 import github.nighter.smartspawner.spawner.config.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
@@ -119,15 +120,14 @@ public class SpawnerSellConfirmUI {
                     player, sourceButton, sourceClickType);
         }
 
-        // Custom title from the layout file, otherwise the language default.
-        String customTitle = plugin.getGuiLayoutConfig().getSellConfirmTitle();
-        String title;
-        if (customTitle != null) {
-            title = GuiText.render(player, customTitle, createPlaceholders(player, spawner, collectExp));
-        } else {
-            title = languageManager.getGuiTitle("gui_title_sell_confirm", null);
-        }
         GuiLayout layout = plugin.getGuiLayoutConfig().getSellConfirmLayout(spawner, player);
+
+        // Title comes from the layout file.
+        String customTitle = plugin.getGuiLayoutConfig().getSellConfirmTitle();
+        Map<String, String> titlePlaceholders = createPlaceholders(player, spawner, collectExp);
+        String title = customTitle != null
+                ? GuiText.render(player, customTitle, titlePlaceholders)
+                : "Confirm Sale";
         Inventory gui = Bukkit.createInventory(
                 new SpawnerSellConfirmHolder(spawner, previousGui, collectExp, layout), GUI_SIZE, title);
 
@@ -197,38 +197,25 @@ public class SpawnerSellConfirmUI {
     }
 
     private ItemStack createCancelButton(GuiButton button, Player player, Map<String, String> placeholders) {
-        String name = languageManager.getGuiItemName("button_sell_cancel.name", placeholders);
-        String[] lore = languageManager.getGuiItemLore("button_sell_cancel.lore", placeholders);
-        return createActionButton(button, player, placeholders, name, lore);
+        return createActionButton(button, player, placeholders, false);
     }
 
     private ItemStack createConfirmButton(GuiButton button, Player player, Map<String, String> placeholders, boolean collectExp) {
-        // Use different button key based on whether exp is collected
-        String buttonKey = collectExp ? "button_sell_confirm_with_exp" : "button_sell_confirm";
-        String name = languageManager.getGuiItemName(buttonKey + ".name", placeholders);
-        String[] lore = languageManager.getGuiItemLore(buttonKey + ".lore", placeholders);
-        return createActionButton(button, player, placeholders, name, lore);
+        return createActionButton(button, player, placeholders, collectExp);
     }
 
     private ItemStack createSpawnerInfoButton(Player player, SpawnerData spawner,
                                               Map<String, String> placeholders, GuiButton button) {
         // Build loot item components for {loot_items} placeholder
         Map<ItemSignature, Long> storedItems = spawner.getVirtualInventory().getConsolidatedItems();
-        List<Component> lootComponents = buildSellInfoLootComponents(spawner, storedItems);
+        List<Component> lootComponents = buildSellInfoLootComponents(
+                spawner, storedItems, button.getText("loot_items"));
 
         // Prepare the meta modifier consumer
         Consumer<ItemMeta> metaModifier = meta -> {
-            // Set display name
-            meta.setDisplayName(languageManager.getGuiItemName("button_sell_info.name", placeholders));
-
-            // Get and set lore with {loot_items} support
-            List<Component> lore = languageManager.buildGuiLoreAsComponents(
-                    "button_sell_info.lore", placeholders, lootComponents, "button_sell_info.loot_items_empty");
-            if (!lore.isEmpty()) {
-                meta.lore(lore);
-            }
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
-            GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
+            GuiButtonRenderer.applyOverrides(meta, button, player, placeholders,
+                    lootComponents, button.getText("loot_items_empty"));
         };
 
         ItemStack spawnerItem;
@@ -251,7 +238,8 @@ public class SpawnerSellConfirmUI {
         return spawnerItem;
     }
 
-    private List<Component> buildSellInfoLootComponents(SpawnerData spawner, Map<ItemSignature, Long> storedItems) {
+    private List<Component> buildSellInfoLootComponents(SpawnerData spawner, Map<ItemSignature, Long> storedItems,
+                                                        String lootFormat) {
         Map<Material, Long> materialAmountMap = new HashMap<>();
         for (Map.Entry<ItemSignature, Long> entry : storedItems.entrySet()) {
             Material material = entry.getKey().getMaterial();
@@ -273,8 +261,8 @@ public class SpawnerSellConfirmUI {
                 long amount = materialAmountMap.getOrDefault(material, 0L);
                 String formattedAmount = languageManager.formatNumber(amount);
                 String chance = String.format("%.1f", lootItem.chance()) + "%";
-                components.add(languageManager.buildTranslatableGuiLootLine(
-                        "button_sell_info.loot_items", material, formattedAmount, chance));
+                components.add(LanguageComponentFormatter.translatableLootLine(
+                        lootFormat, material, formattedAmount, chance));
             }
         } else {
             List<Map.Entry<ItemSignature, Long>> sortedItems = new ArrayList<>(storedItems.entrySet());
@@ -283,8 +271,8 @@ public class SpawnerSellConfirmUI {
                 Material material = entry.getKey().getMaterial();
                 long amount = entry.getValue();
                 String formattedAmount = languageManager.formatNumber(amount);
-                components.add(languageManager.buildTranslatableGuiLootLine(
-                        "button_sell_info.loot_items", material, formattedAmount, ""));
+                components.add(LanguageComponentFormatter.translatableLootLine(
+                        lootFormat, material, formattedAmount, ""));
             }
         }
         return components;
@@ -335,16 +323,14 @@ public class SpawnerSellConfirmUI {
     }
 
     private ItemStack createActionButton(GuiButton button, Player player,
-                                         Map<String, String> placeholders, String name, String[] lore) {
+                                         Map<String, String> placeholders, boolean withExp) {
         Consumer<ItemMeta> metaModifier = meta -> {
-            if (name != null) {
-                meta.setDisplayName(name);
-            }
-            if (lore != null && lore.length > 0) {
-                meta.setLore(Arrays.asList(lore));
-            }
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
-            GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
+            if (withExp) {
+                GuiButtonRenderer.applyOverridesWithExp(meta, button, player, placeholders, null, null);
+            } else {
+                GuiButtonRenderer.applyOverrides(meta, button, player, placeholders);
+            }
         };
 
         ItemStack item;

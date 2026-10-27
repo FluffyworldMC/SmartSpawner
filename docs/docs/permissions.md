@@ -88,6 +88,10 @@ Allows players to break and collect Smart Spawners (subject to tool and Silk Tou
 Players with this permission always receive the spawner item when breaking, regardless of the <code>drop_chance</code> setting. Also allows sneak stack breaking for spawners that have <code>drop_chance</code> configured.
 </PermRow>
 
+<PermRow permission="smartspawner.owner.bypass" defaultVal="op">
+Allows opening and managing any player's spawner, ignoring the owner and member list.
+</PermRow>
+
 <PermRow permission="smartspawner.sellall" defaultVal="true">
 Allows players to sell items from the spawner storage GUI.
 </PermRow>

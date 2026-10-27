@@ -5,7 +5,6 @@ import lombok.Getter;
 @Getter
 public enum LanguageFileType {
     MESSAGES("messages.yml"),
-    GUI("gui.yml"),
     COMMAND_GUI("command_gui.yml"),
     FORMATTING("formatting.yml"),
     ITEMS("items.yml"),

@@ -121,6 +121,10 @@ permissions:
     description: Bypass spawner drop chance and always receive spawner drops
     default: op
 
+  smartspawner.owner.bypass:
+    description: Open and manage any player's spawner regardless of ownership
+    default: op
+
   smartspawner.sellall:
     description: Allow selling items in spawner storage GUI
     default: true

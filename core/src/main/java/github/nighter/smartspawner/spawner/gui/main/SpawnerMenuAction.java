@@ -191,6 +191,18 @@ public class SpawnerMenuAction implements Listener {
                         player, button, clickType,
                         handleExpBottleAcceptedClick(player, spawner, false));
                 return true;
+            case "manage_members":
+                if (!plugin.getGuiButtonInteractionService().tryUse(player, GuiLayoutType.MAIN_GUI, button)) {
+                    return true;
+                }
+                if (!spawner.isOwner(player.getUniqueId())
+                        && !player.hasPermission("smartspawner.owner.bypass")) {
+                    messageService.sendMessage(player, "spawner_not_owner");
+                    return true;
+                }
+                plugin.getGuiButtonInteractionService().playNavigateSound(player, button, clickType);
+                plugin.getSpawnerMemberUI().open(player, spawner);
+                return true;
             default:
                 return false;
         }

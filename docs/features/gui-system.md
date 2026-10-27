@@ -65,4 +65,4 @@ Sort by item type to keep hundreds of storage pages manageable, or filter specif
 
 ## Custom layouts
 
-Choose from the built-in `default`, `DonutSMP`, and `DonutSMP_v2` layouts, or create a layout in `gui_layouts/`. Button slots, materials, custom heads, sounds, and cooldowns are configurable.
+Choose the bundled `default` layout, or create another folder in `gui_layouts/`. Every button's slot, material, custom head, name, lore, sounds and cooldown are configurable in the layout file; the GUI no longer uses a separate language file.

@@ -35,6 +35,12 @@ public class ExternalGuiLayoutLoader {
             "click", "left_click", "right_click", "shift_left_click", "shift_right_click"
     };
 
+    private static final String[] EXTRA_TEXT_KEYS = {
+            "loot_items", "loot_items_empty",
+            "status_full", "status_inactive", "status_no_loot",
+            "sort_selected", "sort_unselected", "sort_empty"
+    };
+
     private final SmartSpawner plugin;
     private final Logger logger;
 
@@ -170,8 +176,25 @@ public class ExternalGuiLayoutLoader {
                 actions, infoButton, customTexture, cooldownTicks, clickSounds, successSounds,
                 failSounds, display.template, display.name, display.lore, display.itemModel,
                 display.customModelData, display.amount, display.hideTooltip);
+        button.setExtraTexts(readExtraTexts(config.getConfigurationSection(buttonKey), buttonKey));
+        button.setDisplayNameWithExp(display.nameWithExp);
+        button.setDisplayLoreWithExp(display.loreWithExp);
         layout.addButton(buttonKey, button);
         return true;
+    }
+
+    private Map<String, String> readExtraTexts(ConfigurationSection section, String buttonKey) {
+        if (section == null) {
+            return Map.of();
+        }
+        Map<String, String> texts = new HashMap<>();
+        for (String key : EXTRA_TEXT_KEYS) {
+            String value = section.getString(key);
+            if (value != null) {
+                texts.put(key, value);
+            }
+        }
+        return Map.copyOf(texts);
     }
 
     /**
@@ -182,7 +205,9 @@ public class ExternalGuiLayoutLoader {
         private Material material = Material.STONE;
         private ItemStack template;
         private String name;
+        private String nameWithExp;
         private List<String> lore;
+        private List<String> loreWithExp;
         private String itemModel;
         private Integer customModelData;
         private int amount = 1;
@@ -222,9 +247,19 @@ public class ExternalGuiLayoutLoader {
                 name = section.getString(namePath);
             }
 
+            String nameWithExpPath = path(basePath, "name_with_exp");
+            if (section.contains(nameWithExpPath)) {
+                nameWithExp = section.getString(nameWithExpPath);
+            }
+
             String lorePath = path(basePath, "lore");
             if (section.contains(lorePath)) {
                 lore = readLore(section, lorePath);
+            }
+
+            String loreWithExpPath = path(basePath, "lore_with_exp");
+            if (section.contains(loreWithExpPath)) {
+                loreWithExp = readLore(section, loreWithExpPath);
             }
 
             String itemModelPath = path(basePath, "item_model");
@@ -482,6 +517,9 @@ public class ExternalGuiLayoutLoader {
                 return plugin.hasSellIntegration();
             case "no_sell_integration":
                 return !plugin.hasSellIntegration();
+            case "is_owner":
+                // Resolved per viewer when the menu is built.
+                return true;
             default:
                 if (logger != null) {
                     logger.warning("Unknown condition: " + condition);

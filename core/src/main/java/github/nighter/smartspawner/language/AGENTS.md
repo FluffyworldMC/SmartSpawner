@@ -26,7 +26,7 @@ path has to clear it explicitly or newly added keys stay invisible until restart
 | Section | Reached via | Backing file |
 |---|---|---|
 | `MessageLanguageSection` | `getMessage`, `getTitle`, `getActionBar`, `getSound` | `messages.yml`, `command_messages.yml` |
-| `GuiLanguageSection` (two instances) | `gui()` and `commandGui()` | `gui.yml`, `command_gui.yml` |
+| `GuiLanguageSection` | `commandGui()` | `command_gui.yml` |
 | `ItemLanguageSection` | `getItemName`, `getItemLore`, `getVanillaItemName` | `items.yml` |
 | `FormattingLanguageSection` | `formatNumber`, formatted mob names | `formatting.yml` |
 | `HologramLanguageSection` | `getHologramText` | `hologram.yml` |
@@ -37,8 +37,10 @@ text exists.
 
 ## Files and locales
 
-`LanguageFileType` is the authoritative list of files per locale: `messages.yml`, `gui.yml`,
+`LanguageFileType` is the authoritative list of files per locale: `messages.yml`,
 `command_gui.yml`, `formatting.yml`, `items.yml`, `command_messages.yml`, `hologram.yml`.
+Spawner GUI text is **not** a language file; it lives in `gui_layouts/default/*.yml` next to each
+button.
 
 Locales live in `core/src/main/resources/language/<locale>/`, currently `en_US`, `vi_VN`, `tr_TR`,
 `es_ES`, plus the layout-specific `en_US_DonutSMP` and `en_US_DonutSMP_v2`. The exact set drifts, so

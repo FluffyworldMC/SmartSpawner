@@ -144,9 +144,6 @@ public final class ConfigMigrations {
     /** Renames applied to {@code command_messages.yml}, whose keys nest under a command, for example {@code list.no_spawners_found}. */
     public static final List<YamlMigrator.Rename> COMMAND_MESSAGES = List.of();
 
-    /** Renames applied to {@code gui.yml}. */
-    public static final List<YamlMigrator.Rename> GUI = List.of();
-
     /** Renames applied to {@code command_gui.yml}. */
     public static final List<YamlMigrator.Rename> COMMAND_GUI = List.of();
 
@@ -164,7 +161,6 @@ public final class ConfigMigrations {
         return switch (type) {
             case MESSAGES         -> MESSAGES;
             case COMMAND_MESSAGES -> COMMAND_MESSAGES;
-            case GUI              -> GUI;
             case COMMAND_GUI      -> COMMAND_GUI;
             case FORMATTING       -> FORMATTING;
             case ITEMS            -> ITEMS;

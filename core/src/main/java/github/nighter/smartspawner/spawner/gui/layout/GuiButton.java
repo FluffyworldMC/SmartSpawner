@@ -2,6 +2,7 @@ package github.nighter.smartspawner.spawner.gui.layout;
 
 import github.nighter.smartspawner.api.gui.GuiButtonSoundData;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -48,6 +49,27 @@ public class GuiButton {
 
     /** Whether to hide the hover tooltip entirely. */
     private final boolean hideTooltip;
+
+    /**
+     * Extra text owned by this button: loot line format, countdown status, sort list labels.
+     * Kept on the button so the whole GUI reads as one slot entry.
+     */
+    @Setter
+    private Map<String, String> extraTexts = Map.of();
+
+    /** Optional confirm-button variant used when the click also collects experience. */
+    @Setter
+    private String displayNameWithExp;
+    @Setter
+    private List<String> displayLoreWithExp;
+
+    public String getText(String key) {
+        return extraTexts.get(key);
+    }
+
+    public boolean hasText(String key) {
+        return extraTexts.containsKey(key);
+    }
 
     public GuiButton(String buttonType, int slot, Material material, boolean enabled,
                      String condition, Map<String, String> actions, boolean infoButton,

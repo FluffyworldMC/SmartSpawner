@@ -10,6 +10,8 @@ import github.nighter.smartspawner.api.gui.GuiLayoutRegistryImpl;
 import github.nighter.smartspawner.api.gui.GuiLayoutType;
 import github.nighter.smartspawner.api.gui.SpawnerGuiLayoutProvider;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import github.nighter.smartspawner.spawner.gui.storage.filter.FilterGuiLayout;
+import github.nighter.smartspawner.spawner.gui.member.MemberGuiLayout;
 import github.nighter.smartspawner.updates.GuiLayoutUpdater;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +27,8 @@ public class GuiLayoutConfig {
     private static final String STORAGE_GUI_FILE = "storage_gui.yml";
     private static final String MAIN_GUI_FILE = "main_gui.yml";
     private static final String SELL_CONFIRM_GUI_FILE = "sell_confirm_gui.yml";
+    private static final String FILTER_GUI_FILE = "filter_gui.yml";
+    private static final String MEMBERS_GUI_FILE = "members_gui.yml";
     private static final String DEFAULT_LAYOUT = "default";
 
     private final SmartSpawner plugin;
@@ -45,15 +49,21 @@ public class GuiLayoutConfig {
     @Getter
     private GuiLayout currentSellConfirmLayout;
     @Getter
+    private FilterGuiLayout currentFilterLayout = FilterGuiLayout.empty();
+    @Getter
+    private MemberGuiLayout currentMemberLayout = MemberGuiLayout.empty();
+    @Getter
     private boolean skipMainGui;
     @Getter
     private boolean skipSellConfirmation;
     @Getter
     private String openSound;
 
-    /** Custom GUI titles from the layout files; {@code null} means "use the language default". */
+    /** Titles read from the layout files. {@code null} means the file did not set one. */
     @Getter
     private String mainTitle;
+    @Getter
+    private String mainTitleSingle;
     @Getter
     private String storageTitle;
     @Getter
@@ -84,10 +94,27 @@ public class GuiLayoutConfig {
         // Load GUI behaviour settings from the respective layout files
         loadLayoutSettings();
         loadLayoutTitles();
+        loadFilterLayout();
+        loadMemberLayout();
+    }
+
+    private void loadMemberLayout() {
+        File memberFile = resolveLayoutFile(MEMBERS_GUI_FILE);
+        this.currentMemberLayout = MemberGuiLayout.load(memberFile, loader);
+    }
+
+    private void loadFilterLayout() {
+        File filterFile = resolveLayoutFile(FILTER_GUI_FILE);
+        this.currentFilterLayout = FilterGuiLayout.load(filterFile);
     }
 
     private void loadLayoutTitles() {
-        this.mainTitle = readConfiguredString(resolveLayoutFile(MAIN_GUI_FILE), "title");
+        File mainFile = resolveLayoutFile(MAIN_GUI_FILE);
+        this.mainTitle = readConfiguredString(mainFile, "title");
+        String nestedSingle = readConfiguredString(mainFile, "title.single");
+        this.mainTitleSingle = nestedSingle != null
+                ? nestedSingle : readConfiguredString(mainFile, "title_single");
+
         File storageFile = resolveLayoutFile(STORAGE_GUI_FILE);
         this.storageTitle = readConfiguredString(storageFile, "title");
         this.storageSingleTitle = readConfiguredString(storageFile, "title_single");

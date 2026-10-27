@@ -40,4 +40,4 @@ Sắp xếp theo loại vật phẩm để quản lý hàng trăm trang, hoặc 
 
 ## Bố Cục Tùy Chỉnh
 
-Chọn bố cục `default`, `DonutSMP`, `DonutSMP_v2` có sẵn hoặc tạo bố cục trong `gui_layouts/`. Có thể cấu hình slot nút, material, custom head, âm thanh và cooldown.
+Chọn bố cục `default` có sẵn, hoặc tạo thư mục khác trong `gui_layouts/`. Mỗi nút có slot, material, custom head, tên, lore, âm thanh và cooldown ngay trong file bố cục; GUI không còn dùng file ngôn ngữ riêng.

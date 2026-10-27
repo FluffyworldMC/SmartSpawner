@@ -20,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
@@ -120,6 +121,85 @@ public class SpawnerData {
 
     @Getter @Setter
     private String lastInteractedPlayer;
+
+    /** The player who placed this spawner. {@code null} means an older or admin-created spawner. */
+    @Getter @Setter
+    private UUID ownerUUID;
+
+    /** Players the owner allowed to use this spawner. */
+    private final Set<UUID> memberUUIDs = ConcurrentHashMap.newKeySet();
+
+    public boolean isOwner(UUID playerId) {
+        return playerId != null && (ownerUUID == null || ownerUUID.equals(playerId));
+    }
+
+    /**
+     * Whether this player may open and use the spawner. A spawner with no recorded owner stays open
+     * to everyone so existing worlds do not lock their players out after upgrading.
+     */
+    public boolean canUse(Player player) {
+        if (player == null) {
+            return false;
+        }
+        UUID playerId = player.getUniqueId();
+        return ownerUUID == null
+                || ownerUUID.equals(playerId)
+                || memberUUIDs.contains(playerId)
+                || player.hasPermission("smartspawner.owner.bypass");
+    }
+
+    public Set<UUID> getMemberUUIDs() {
+        return Collections.unmodifiableSet(memberUUIDs);
+    }
+
+    public boolean hasMember(UUID playerId) {
+        return playerId != null && memberUUIDs.contains(playerId);
+    }
+
+    public boolean addMember(UUID playerId) {
+        return playerId != null && memberUUIDs.add(playerId);
+    }
+
+    public boolean removeMember(UUID playerId) {
+        return playerId != null && memberUUIDs.remove(playerId);
+    }
+
+    public void clearMembers() {
+        memberUUIDs.clear();
+    }
+
+    /** Comma-separated UUIDs for storage; the set order does not matter. */
+    public String serializeMembers() {
+        if (memberUUIDs.isEmpty()) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (UUID uuid : memberUUIDs) {
+            if (builder.length() > 0) {
+                builder.append(',');
+            }
+            builder.append(uuid);
+        }
+        return builder.toString();
+    }
+
+    public void loadMembers(String raw) {
+        memberUUIDs.clear();
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        for (String part : raw.split(",")) {
+            String value = part.trim();
+            if (value.isEmpty()) {
+                continue;
+            }
+            try {
+                memberUUIDs.add(UUID.fromString(value));
+            } catch (IllegalArgumentException ignored) {
+                // Ignore a malformed UUID from an older or hand-edited row.
+            }
+        }
+    }
 
     @Getter
     private SellResult lastSellResult;

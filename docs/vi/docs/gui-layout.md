@@ -6,17 +6,50 @@ SmartSpawner cho phép tùy chỉnh hoàn toàn GUI spawner bằng các file tro
 
 ```
 plugins/SmartSpawner/gui_layouts/
-├── default/
-│   ├── main_gui.yml
-│   ├── storage_gui.yml
-│   └── sell_confirm_gui.yml
-├── DonutSMP/
-│   └── ...
-└── DonutSMP_v2/
-    └── ...
+└── default/
+    ├── main_gui.yml
+    ├── storage_gui.yml
+    ├── sell_confirm_gui.yml
+    └── filter_gui.yml
 ```
 
-Chọn bố cục bằng `gui_layout` trong `config.yml` hoặc đổi trực tiếp với `/ss gui_layout <name>`.
+`default` là bố cục duy nhất đi kèm. Bạn vẫn có thể tạo thư mục khác và chọn bằng `gui_layout`
+trong `config.yml` hoặc `/ss gui_layout <name>`.
+
+## Mọi chữ trong GUI nằm ngay tại slot
+
+Không còn file ngôn ngữ GUI riêng. Mỗi nút giữ icon, tên, lore, hành động và phần chữ phụ trong
+cùng một khối slot:
+
+```yaml
+slot_12:
+  material: CHEST
+  name: "&a&lSTORAGE"
+  lore:
+    - "&7Items: &f{current_items}&7/&f{max_slots}"
+    - "&7Worth: &6${total_sell_price}"
+    - "&eClick to open"
+  loot_items: "  &8• &f{item_name}&f: &e{amount}"
+  loot_items_empty: "  &8• &fNo items stored"
+  click:
+    action: "open_storage"
+    sound: block.chest.open
+```
+
+Tiêu đề là khóa cấp đầu file (`title`, và `title_single` cho GUI kho). Mọi dòng đều nhận mã màu
+`&`, `&#RRGGBB`, các placeholder ghi ở đầu mỗi file và PlaceholderAPI như `%player_name%`.
+
+Các khóa chữ phụ:
+
+| Khóa | Dùng cho | Ý nghĩa |
+|---|---|---|
+| `loot_items` | nút kho / thông tin / tóm tắt bán | định dạng từng dòng cho `{loot_items}` |
+| `loot_items_empty` | như trên | dòng hiện khi không có vật phẩm |
+| `status_full` | nút thông tin | chữ thay cho `{time}` khi kho đầy |
+| `status_inactive` | nút thông tin | chữ thay cho `{time}` khi spawner tắt |
+| `status_no_loot` | nút thông tin | chữ thay cho `{time}` khi chưa có loot |
+| `sort_selected` / `sort_unselected` / `sort_empty` | nút sắp xếp | danh sách `{available_items}` |
+| `name_with_exp` / `lore_with_exp` | nút xác nhận bán | dùng khi bán kèm nhận EXP |
 
 ## Cách Chỉnh Sửa Của Bạn Được Giữ Lại
 
